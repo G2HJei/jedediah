@@ -582,6 +582,24 @@ func (s *Server) touch(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// setNextStep saves the next step and its date from the detail header.
+func (s *Server) setNextStep(w http.ResponseWriter, r *http.Request) {
+	f, err := newForm(r)
+	if err != nil {
+		s.fail(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+	step, date := f.line("nextStep"), f.date("nextStepDate", "process.nextStepDate")
+	if msg := f.errs.Get("process.nextStepDate"); msg != "" {
+		s.fail(w, r, http.StatusBadRequest, "Next step date: "+msg)
+		return
+	}
+	s.quickUpdate(w, r, "Next step saved", func(a *model.Application) error {
+		a.Process.NextStep, a.Process.NextStepDate = step, date
+		return nil
+	})
+}
+
 // quickUpdate applies a one-click change and answers according to where it
 // came from (the "ctx" field): the detail header, the decision suggestion,
 // an applications table row, the dashboard or the board.

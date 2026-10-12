@@ -17,6 +17,7 @@ func (s *Server) routes() *http.ServeMux {
 	mux.HandleFunc("POST /applications/{id}/status", s.setStatus)
 	mux.HandleFunc("POST /applications/{id}/priority", s.setPriority)
 	mux.HandleFunc("POST /applications/{id}/touch", s.touch)
+	mux.HandleFunc("POST /applications/{id}/next-step", s.setNextStep)
 	mux.HandleFunc("POST /applications/{id}/company", s.relinkCompany)
 	mux.HandleFunc("POST /applications/{id}/delete", s.deleteApplication)
 	mux.HandleFunc("POST /applications/{id}/files", s.uploadFile)

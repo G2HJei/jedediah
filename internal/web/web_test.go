@@ -420,6 +420,28 @@ func TestQuickActions(t *testing.T) {
 		}
 	}
 
+	// The header's next step is always there, and saving it refreshes the process card too.
+	expect(t, a.get("/applications/"+appID, false), 200, `<details class="next-step">`, "Not set")
+	r = a.post("/applications/"+appID+"/next-step", url.Values{"nextStep": {"Chase  the recruiter "}, "nextStepDate": {"2026-10-09"}, "ctx": {"detail"}}, true)
+	expect(t, r, 200, `id="app-header"`, `<strong class="next-step-value">Chase the recruiter</strong>`, "9 Oct 2026 (in 2 days)",
+		`id="section-process"`, `hx-swap-oob="true"`)
+	if !strings.Contains(r.Header.Get("HX-Trigger"), "Next step saved") {
+		t.Errorf("HX-Trigger = %q", r.Header.Get("HX-Trigger"))
+	}
+	expect(t, a.post("/applications/"+appID+"/next-step", url.Values{"nextStepDate": {"soon"}, "ctx": {"detail"}}, true), http.StatusBadRequest, "Use a date like")
+	y = a.readFile("applications/" + appID + "/application.yaml")
+	for _, want := range []string{"nextStep: Chase the recruiter", "nextStepDate: 2026-10-09"} {
+		if !strings.Contains(y, want) {
+			t.Errorf("missing %q:\n%s", want, y)
+		}
+	}
+	// Without JavaScript the form posts normally and goes back to the page.
+	r = a.post("/applications/"+appID+"/next-step", url.Values{"nextStep": {""}, "nextStepDate": {""}}, false)
+	expect(t, r, http.StatusSeeOther)
+	if y = a.readFile("applications/" + appID + "/application.yaml"); strings.Contains(y, "nextStep") {
+		t.Errorf("next step not cleared:\n%s", y)
+	}
+
 	// A decision offers the matching status; the suggestion button applies it.
 	expect(t, a.post("/applications/"+appID+"/sections/process", url.Values{"decision": {"Offer accepted"}}, true), 200, "Set status to Accepted")
 	r = a.post("/applications/"+appID+"/status", url.Values{"status": {"accepted"}, "ctx": {"suggest"}}, true)
@@ -583,7 +605,8 @@ func TestPagesWithDemoData(t *testing.T) {
 	// Fields, empty fields and header dates say which input clicking them edits.
 	expect(t, a.get("/applications/2026-08-18-larkspur-payments-senior-backend-engineer-payments-core", false), 200,
 		`<dd data-edit-field="noticePeriod">`, `href="/applications/2026-08-18-larkspur-payments-senior-backend-engineer-payments-core/sections/compensation/edit" data-edit-field="startDate">Start date</a>`,
-		`data-edit-section="process" data-edit-field="nextStep"`, `class="contact-group" data-edit-field="recruiter_name"`)
+		`data-edit-section="process" data-edit-field="lastContactDate"`, `class="contact-group" data-edit-field="recruiter_name"`,
+		`<strong class="next-step-value">Submit take-home (reconciliation service)</strong>`, `name="nextStepDate" value="2026-10-09"`)
 
 	// Active applications by default; closed ones with the toggle.
 	r := a.get("/applications", false)

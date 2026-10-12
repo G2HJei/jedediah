@@ -51,8 +51,8 @@ templ sectionCard(d DetailData, name string) {
 	}
 }
 
-// DetailHeader is one row: title, key dates, then the priority/status
-// selects and actions. Status and priority changes re-render it.
+// DetailHeader is one row: title, key dates, the next step, then the
+// priority/status selects and actions. Status and priority changes re-render it.
 templ DetailHeader(d DetailData, oob bool) {
 	{{ a := d.Base.App }}
 	{{ cfg := d.Base.Config }}
@@ -87,6 +87,7 @@ templ DetailHeader(d DetailData, oob bool) {
 				}
 			</ul>
 		}
+		@nextStep(d)
 		<div class="quick-controls">
 			<form method="post" action={ appURL(d) + "/priority" } class="inline-form">
 				<input type="hidden" name="ctx" value="detail"/>
@@ -119,6 +120,35 @@ templ DetailHeader(d DetailData, oob bool) {
 			</form>
 		</div>
 	</header>
+}
+
+// nextStep is always in the header, set or not. Clicking it opens a small
+// form in place; saving re-renders the header.
+templ nextStep(d DetailData) {
+	{{ p := d.Base.App.Process }}
+	<details class="next-step">
+		<summary title="Click to edit">
+			<span class="small muted">Next step</span>
+			if p.NextStep == "" && p.NextStepDate.IsZero() {
+				<span class="next-step-value muted">Not set</span>
+			}
+			if p.NextStep != "" {
+				<strong class="next-step-value">{ p.NextStep }</strong>
+			}
+			if !p.NextStepDate.IsZero() {
+				<span class={ "next-step-value", templ.KV("small", p.NextStep != ""), templ.KV("overdue", isOverdue(d.Base.Config, d.Base.App, d.Base.Today)) }>
+					{ p.NextStepDate.Display() } ({ components.Relative(p.NextStepDate, d.Base.Today) })
+				</span>
+			}
+		</summary>
+		<form method="post" action={ appURL(d) + "/next-step" } hx-post={ appURL(d) + "/next-step" } hx-target="#app-header" hx-swap="outerHTML" class="inline-form">
+			<input type="hidden" name="ctx" value="detail"/>
+			<input type="text" name="nextStep" value={ p.NextStep } placeholder="What happens next?" aria-label="Next step"/>
+			<input type="date" name="nextStepDate" value={ p.NextStepDate.FormValue() } aria-label="Next step date"/>
+			<button type="submit" class="small">Save</button>
+			<button type="button" class="secondary outline small" data-close-details>Cancel</button>
+		</form>
+	</details>
 }
 
 templ attachments(d DetailData) {

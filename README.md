@@ -20,8 +20,9 @@ embedded in the binary, so it works offline.
   Job Application and Attachments, Hiring Process and Compensation, Interviews and Q&A, then Notes
   and Lessons learned. A wide screen shows everything without scrolling; on a narrower one the
   columns that don't fit go under the shortest ones. Click any field, empty
-  field name or header date to edit it in place. It also has inline status/priority selects and a
-  "Contacted today" button.
+  field name or header date to edit it in place. The header always shows the next step and its
+  date; click it to change them without opening the Hiring Process card. It also has inline
+  status/priority selects and a "Contacted today" button.
 - **Repeatable entries**: recruiters, interviewers, interview rounds (Interview 1, 2, 3, …),
   questions and answers per round, and extra materials sent.
 - **Attachments**: upload the posting (PDF/HTML/MHTML) or paste its text, cover letters and

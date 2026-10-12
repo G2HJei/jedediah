@@ -31,12 +31,17 @@
     toast("Could not reach the app. Is it still running?", true);
   });
 
-  // ---- Clicks: remove a repeatable row, edit a field, open a table row ----
+  // ---- Clicks: remove a repeatable row, close the next step form, edit a field, open a table row ----
   document.addEventListener("click", function (e) {
     var remove = e.target.closest("[data-remove-row]");
     if (remove) {
       var row = remove.closest("[data-row]");
       if (row) row.remove();
+      return;
+    }
+    var close = e.target.closest("[data-close-details]");
+    if (close) {
+      closeDetails(close.closest("details"));
       return;
     }
     var spot = e.target.closest("[data-edit-field]");
@@ -100,6 +105,25 @@
     if (/^(text|search|url|tel|textarea)$/.test(input.type)) {
       input.setSelectionRange(input.value.length, input.value.length);
     }
+  }
+
+  // ---- Header next step: a <details> that opens a small form ----
+  document.addEventListener("toggle", function (e) {
+    var d = e.target;
+    if (!d.matches || !d.matches("details.next-step") || !d.open) return;
+    var input = d.querySelector("input[type=text]");
+    if (input) {
+      input.focus();
+      input.setSelectionRange(input.value.length, input.value.length);
+    }
+  }, true); // toggle doesn't bubble
+
+  function closeDetails(d) {
+    if (!d) return;
+    var form = d.querySelector("form");
+    if (form) form.reset();
+    d.open = false;
+    d.querySelector("summary").focus();
   }
 
   // ---- Edit forms: Ctrl/Cmd+Enter saves, Esc cancels ----
@@ -198,6 +222,12 @@
         cancelEdit(card);
         return;
       }
+    }
+    var nextStep = t.closest && t.closest("details.next-step[open]");
+    if (nextStep && e.key === "Escape") {
+      e.preventDefault();
+      closeDetails(nextStep);
+      return;
     }
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) {

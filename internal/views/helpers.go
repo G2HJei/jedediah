@@ -64,7 +64,8 @@ type keyDate struct {
 	Section, Field     string
 }
 
-// keyDates picks the dates worth showing in the application header.
+// keyDates picks the dates worth showing in the application header. The
+// next step has a header item of its own (nextStep).
 func keyDates(d DetailData) []keyDate {
 	a := d.Base.App
 	today := d.Base.Today
@@ -79,7 +80,6 @@ func keyDates(d DetailData) []keyDate {
 	}
 	add("Applied", p.DateApplied, p.DateApplied.Display(), "", false, "process", "dateApplied")
 	add("Last contact", p.LastContactDate, p.LastContactDate.Display(), components.Relative(p.LastContactDate, today), false, "process", "lastContactDate")
-	add("Next step", p.NextStepDate, p.NextStepDate.Display(), p.NextStep, true, "process", "nextStep")
 	for i, iv := range p.Interviews {
 		if !iv.Date.IsZero() && !iv.Date.Date().Before(today) {
 			add("Next interview", iv.Date.Date(), iv.Date.Display(), "Interview "+strconv.Itoa(i+1)+" "+iv.Type, false, "interviews", "interview_date")
