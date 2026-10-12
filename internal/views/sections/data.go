@@ -15,13 +15,15 @@ import (
 )
 
 // Names lists the sections in display order.
-var Names = []string{"company", "job", "contacts", "process", "compensation", "notes", "lessons"}
+var Names = []string{"company", "job", "contacts", "process", "interviews", "qa", "compensation", "notes", "lessons"}
 
 var titles = map[string]string{
 	"company":      "Company",
 	"job":          "Job Application",
 	"contacts":     "Contacts",
 	"process":      "Hiring Process",
+	"interviews":   "Interviews",
+	"qa":           "Questions & answers",
 	"compensation": "Compensation",
 	"notes":        "Notes",
 	"lessons":      "Lessons learned",
@@ -70,7 +72,13 @@ func Rev(name string, a model.Application, c model.Company) string {
 	case "contacts":
 		return model.Rev(a.Contacts)
 	case "process":
-		return model.Rev(a.Process)
+		p := a.Process
+		p.Interviews, p.QA = nil, nil // sections of their own
+		return model.Rev(p)
+	case "interviews":
+		return model.Rev(a.Process.Interviews)
+	case "qa":
+		return model.Rev(a.Process.QA)
 	case "compensation":
 		return model.Rev(a.Compensation)
 	case "notes":

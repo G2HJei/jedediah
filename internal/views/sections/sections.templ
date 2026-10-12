@@ -207,16 +207,6 @@ templ processView(d Data) {
 	}
 }
 
-// processParts shows interviews and questions in cards of their own.
-templ processParts(d Data) {
-	@partCard(d, "process", "interviews", "Interviews", "interview_date", len(d.App.Process.Interviews) == 0) {
-		@interviewsList(d)
-	}
-	@partCard(d, "process", "qa", "Questions & answers", "qa_question", len(d.App.Process.QA) == 0) {
-		@qaList(d)
-	}
-}
-
 templ processEdit(d Data) {
 	@editCard(d, "process", nil) {
 		{{ p := d.App.Process }}
@@ -229,30 +219,11 @@ templ processEdit(d Data) {
 			@components.DateInput("Date applied", "dateApplied", p.DateApplied, d.err("process.dateApplied"))
 			@components.DateTimeInput("Screening date", "screeningDate", p.ScreeningDate, d.err("process.screeningDate"))
 		</div>
-		<fieldset>
-			<legend>Interview rounds</legend>
-			<div id="rows-interview" class="rows interview-rows">
-				for i, iv := range interviewsOrBlank(p.Interviews) {
-					@InterviewRow(iv, d.Config.InterviewTypes, d.err("process.interviews."+itoa(i)+".date"))
-				}
-			</div>
-			@addRowButton("/partials/row/interview", "interview", "Add round")
-			@datalist("interviewer-names", d.interviewerNames())
-		</fieldset>
 		<div class="grid">
 			@components.DateInput("Follow-up date", "followUpDate", p.FollowUpDate, d.err("process.followUpDate"))
 			@components.DateInput("Offer date", "offerDate", p.OfferDate, d.err("process.offerDate"))
 			@components.DateInput("Offer response deadline", "offerResponseDeadline", p.OfferResponseDeadline, d.err("process.offerResponseDeadline"))
 		</div>
-		<fieldset>
-			<legend>Questions asked / answers</legend>
-			<div id="rows-qa" class="rows">
-				for i, q := range qaOrBlank(p.QA) {
-					@QARow(q, d.roundOptions(q.Round), d.err("process.qa."+itoa(i)+".question"))
-				}
-			</div>
-			@addRowButton("/partials/row/qa?rounds="+itoa(max(len(p.Interviews), 3)), "qa", "Add question")
-		</fieldset>
 		<fieldset>
 			<legend>Take-home task</legend>
 			@components.TextArea("Details (Markdown)", "takeHomeDetails", p.TakeHome.Details, "", 3)
@@ -260,6 +231,33 @@ templ processEdit(d Data) {
 		</fieldset>
 		@components.Select("Decision", "decision", p.Decision, components.Strings(d.Config.Decisions), "", "–")
 		@components.TextArea("Rejection reason / feedback (Markdown)", "rejectionFeedback", p.RejectionFeedback, "", 3)
+	}
+}
+
+// ---- Interviews ----
+// Interviews and Q&A are stored with the hiring process but shown and
+// edited in cards of their own, so the process card stays short.
+templ interviewsView(d Data) {
+	@viewCard(d, "interviews") {
+		if len(d.App.Process.Interviews) == 0 {
+			@notSet(d.sectionURL("interviews")+"/edit", "interview_date")
+		} else {
+			<div data-edit-field="interview_date">
+				@interviewsList(d)
+			</div>
+		}
+	}
+}
+
+templ interviewsEdit(d Data) {
+	@editCard(d, "interviews", nil) {
+		<div id="rows-interview" class="rows interview-rows">
+			for i, iv := range interviewsOrBlank(d.App.Process.Interviews) {
+				@InterviewRow(iv, d.Config.InterviewTypes, d.err("process.interviews."+itoa(i)+".date"))
+			}
+		</div>
+		@addRowButton("/partials/row/interview", "interview", "Add round")
+		@datalist("interviewer-names", d.interviewerNames())
 	}
 }
 
@@ -278,6 +276,30 @@ templ InterviewRow(iv model.Interview, types []string, dateErr string) {
 		</div>
 		@components.TextArea("Notes", "interview_notes", iv.Notes, "", 2)
 	</div>
+}
+
+// ---- Questions & answers ----
+templ qaView(d Data) {
+	@viewCard(d, "qa") {
+		if len(d.App.Process.QA) == 0 {
+			@notSet(d.sectionURL("qa")+"/edit", "qa_question")
+		} else {
+			<div data-edit-field="qa_question">
+				@qaList(d)
+			</div>
+		}
+	}
+}
+
+templ qaEdit(d Data) {
+	@editCard(d, "qa", nil) {
+		<div id="rows-qa" class="rows">
+			for i, q := range qaOrBlank(d.App.Process.QA) {
+				@QARow(q, d.roundOptions(q.Round), d.err("process.qa."+itoa(i)+".question"))
+			}
+		</div>
+		@addRowButton("/partials/row/qa?rounds="+itoa(max(len(d.App.Process.Interviews), 3)), "qa", "Add question")
+	}
 }
 
 // QARow is one question with its answer, optionally linked to a round.

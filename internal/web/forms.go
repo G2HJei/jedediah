@@ -175,8 +175,10 @@ func bindContacts(f *form) model.Contacts {
 	}
 }
 
+// bindProcess reads the Hiring Process form. Interviews and Q&A are
+// sections of their own (bindInterviews, bindQA).
 func bindProcess(f *form) model.Process {
-	p := model.Process{
+	return model.Process{
 		NextStep:              f.line("nextStep"),
 		NextStepDate:          f.date("nextStepDate", "process.nextStepDate"),
 		LastContactDate:       f.date("lastContactDate", "process.lastContactDate"),
@@ -192,26 +194,37 @@ func bindProcess(f *form) model.Process {
 		Decision:          f.line("decision"),
 		RejectionFeedback: f.text("rejectionFeedback"),
 	}
+}
+
+// bindInterviews reads the interview rounds, skipping blank ones.
+func bindInterviews(f *form) []model.Interview {
+	var out []model.Interview
 	for i := range f.count("interview_date") {
 		date, typ := f.at("interview_date", i), model.NormalizeLine(f.at("interview_type", i))
 		names, notes := splitNames(f.at("interview_interviewers", i)), model.NormalizeText(f.at("interview_notes", i))
 		if strings.TrimSpace(date) == "" && typ == "" && len(names) == 0 && notes == "" {
 			continue
 		}
-		key := fmt.Sprintf("process.interviews.%d.date", len(p.Interviews))
-		p.Interviews = append(p.Interviews, model.Interview{
+		key := fmt.Sprintf("process.interviews.%d.date", len(out))
+		out = append(out, model.Interview{
 			Date: f.parseDateTime(date, key), Type: typ, Interviewers: names, Notes: notes,
 		})
 	}
+	return out
+}
+
+// bindQA reads the questions and answers, skipping blank ones.
+func bindQA(f *form) []model.QA {
+	var out []model.QA
 	for i := range f.count("qa_question") {
 		q := model.QA{Question: model.NormalizeLine(f.at("qa_question", i)), Answer: model.NormalizeText(f.at("qa_answer", i))}
 		if q.Question == "" && q.Answer == "" {
 			continue
 		}
 		q.Round, _ = strconv.Atoi(f.at("qa_round", i))
-		p.QA = append(p.QA, q)
+		out = append(out, q)
 	}
-	return p
+	return out
 }
 
 func bindCompensation(f *form) model.Compensation {

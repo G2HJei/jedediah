@@ -117,9 +117,12 @@ func ValidateContacts(c *Contacts) FieldErrors {
 }
 
 // ValidateProcess checks the Hiring Process group.
-func ValidateProcess(p *Process) FieldErrors {
+func ValidateProcess(p *Process) FieldErrors { return ValidateQA(p.QA) }
+
+// ValidateQA checks the questions and answers of the Hiring Process group.
+func ValidateQA(qa []QA) FieldErrors {
 	fe := FieldErrors{}
-	for i, q := range p.QA {
+	for i, q := range qa {
 		if strings.TrimSpace(q.Question) == "" {
 			fe.Add(fmt.Sprintf("process.qa.%d.question", i), "Question is required")
 		}

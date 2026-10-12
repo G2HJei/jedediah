@@ -32,7 +32,8 @@ templ DetailPage(p Page, d DetailData) {
 				@sectionCard(d, "compensation")
 			</div>
 			<div class="card-group">
-				@sections.Parts("process", d.Base)
+				@sectionCard(d, "interviews")
+				@sectionCard(d, "qa")
 			</div>
 			<div class="card-group">
 				@sectionCard(d, "notes")
@@ -46,7 +47,7 @@ templ sectionCard(d DetailData, name string) {
 	if name == d.EditName {
 		@sections.Edit(name, d.EditData)
 	} else {
-		@sections.Card(name, d.Base)
+		@sections.View(name, d.Base)
 	}
 }
 

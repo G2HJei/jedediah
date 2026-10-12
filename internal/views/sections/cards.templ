@@ -1,15 +1,7 @@
 package sections
 
-// View renders a section's view card and its part cards, for responses
-// that re-render the section.
+// View renders a section's view card.
 templ View(name string, d Data) {
-	@Card(name, d)
-	@Parts(name, d)
-}
-
-// Card renders a section's view card alone. The application page places
-// the part cards separately.
-templ Card(name string, d Data) {
 	switch name {
 		case "company":
 			@companyView(d)
@@ -19,6 +11,10 @@ templ Card(name string, d Data) {
 			@contactsView(d)
 		case "process":
 			@processView(d)
+		case "interviews":
+			@interviewsView(d)
+		case "qa":
+			@qaView(d)
 		case "compensation":
 			@compensationView(d)
 		case "notes":
@@ -26,35 +22,6 @@ templ Card(name string, d Data) {
 		case "lessons":
 			@textView(d, "lessons", "lessonsLearned", d.App.Other.LessonsLearned)
 	}
-}
-
-// Parts renders the extra view cards of a section (only the hiring process
-// has them).
-templ Parts(name string, d Data) {
-	if name == "process" {
-		@processParts(d)
-	}
-}
-
-// partCard shows part of a section in its own card, so a long section does
-// not make one very tall column. It is edited with the rest of the section:
-// app.js opens that section's form (data-edit-section). It always carries
-// hx-swap-oob, which htmx ignores on the initial page, so a response that
-// re-renders the section refreshes it wherever it is.
-templ partCard(d Data, section, part, title, field string, empty bool) {
-	<article id={ sectionID(section + "-" + part) } class="section" data-edit-section={ section } hx-swap-oob="true">
-		<header class="section-head">
-			<h2>{ title }</h2>
-			<a href={ d.sectionURL(section) + "/edit" } data-edit-field={ field } role="button" class="outline secondary small">Edit</a>
-		</header>
-		if empty {
-			@notSet(d.sectionURL(section)+"/edit", field)
-		} else {
-			<div data-edit-field={ field }>
-				{ children... }
-			</div>
-		}
-	</article>
 }
 
 // notSet fills a card that shows a single field while it is empty.
@@ -73,6 +40,10 @@ templ Edit(name string, d Data) {
 			@contactsEdit(d)
 		case "process":
 			@processEdit(d)
+		case "interviews":
+			@interviewsEdit(d)
+		case "qa":
+			@qaEdit(d)
 		case "compensation":
 			@compensationEdit(d)
 		case "notes":

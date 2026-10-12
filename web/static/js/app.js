@@ -55,8 +55,7 @@
 
   // ---- Click a field on the application page to edit it ----
   // View cards mark rows with data-edit-field (the input to focus). Header
-  // dates and part cards (e.g. Interviews) name the section they belong to
-  // with data-edit-section.
+  // dates name the section they belong to with data-edit-section.
   var pendingEdit = null;
 
   function clickToEdit(e, spot) {

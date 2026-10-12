@@ -184,17 +184,21 @@ func TestCreateEditEverySection(t *testing.T) {
 			[]string{"recruiters:\n    - name: Tom\n", "    - name: Ann\n", "interviewers:\n    - name: Alex\n"}},
 		{"process", url.Values{"nextStep": {"Tech interview"}, "nextStepDate": {"2026-10-14"},
 			"lastContactDate": {"2026-10-07"}, "dateApplied": {"2026-10-01"}, "screeningDate": {"2026-10-09T10:00"},
-			"interview_date": {"2026-10-14T14:00", "", "2026-10-20T00:00"}, "interview_type": {"Technical", "", "Final"},
-			"interview_interviewers": {"Alex, Sam", "", ""}, "interview_notes": {"", "", ""},
 			"followUpDate": {"2026-10-16"}, "offerDate": {""}, "offerResponseDeadline": {""},
-			"qa_round": {"0", "1"}, "qa_question": {"Why leave?", "Design a cache"}, "qa_answer": {"Growth", ""},
 			"takeHomeDetails": {"Build a thing"}, "takeHomeDeadline": {"2026-10-12T17:00"},
 			"decision": {"Pending"}, "rejectionFeedback": {""}},
-			[]string{"Tech interview", "Interview 1", "Interview 2", "Why leave?", "Take-home deadline"},
-			[]string{"nextStepDate: 2026-10-14", "screeningDate: 2026-10-09T10:00",
-				"- date: 2026-10-14T14:00\n      type: Technical\n      interviewers: [Alex, Sam]",
-				"- date: 2026-10-20\n      type: Final", "- round: 1\n      question: Design a cache",
-				"deadline: 2026-10-12T17:00"}},
+			[]string{"Tech interview", "Take-home deadline"},
+			[]string{"nextStepDate: 2026-10-14", "screeningDate: 2026-10-09T10:00", "deadline: 2026-10-12T17:00"}},
+		// Interviews and Q&A are stored in the process but saved apart from it.
+		{"interviews", url.Values{
+			"interview_date": {"2026-10-14T14:00", "", "2026-10-20T00:00"}, "interview_type": {"Technical", "", "Final"},
+			"interview_interviewers": {"Alex, Sam", "", ""}, "interview_notes": {"", "", ""}},
+			[]string{"Interview 1", "Interview 2", "Alex, Sam"},
+			[]string{"- date: 2026-10-14T14:00\n      type: Technical\n      interviewers: [Alex, Sam]",
+				"- date: 2026-10-20\n      type: Final", "nextStepDate: 2026-10-14"}},
+		{"qa", url.Values{"qa_round": {"0", "1"}, "qa_question": {"Why leave?", "Design a cache"}, "qa_answer": {"Growth", ""}},
+			[]string{"General / screening", "Why leave?", "Interview 1"},
+			[]string{"- round: 1\n      question: Design a cache", "type: Technical", "nextStepDate: 2026-10-14"}},
 		{"compensation", url.Values{"asked_min": {"92000"}, "asked_max": {""}, "asked_currency": {"GBP"}, "asked_period": {"year"},
 			"asked_note": {""}, "offered_min": {""}, "offered_max": {""}, "offered_currency": {"GBP"}, "offered_period": {"year"},
 			"offered_note": {""}, "contractType": {"Permanent"}, "bonus": {"10%"}, "equity": {""}, "benefits": {"- Pension"},
@@ -255,6 +259,10 @@ func TestValidationErrorsRerenderForm(t *testing.T) {
 
 	r = a.post("/applications/"+appID+"/sections/process", url.Values{"nextStepDate": {"14/10/2026"}}, true)
 	expect(t, r, http.StatusUnprocessableEntity, "Use a date like 2026-10-14")
+	r = a.post("/applications/"+appID+"/sections/interviews", url.Values{"interview_date": {"soon"}}, true)
+	expect(t, r, http.StatusUnprocessableEntity, `id="section-interviews"`, "Use a date and time like 2026-10-14 14:00")
+	r = a.post("/applications/"+appID+"/sections/qa", url.Values{"qa_round": {"1"}, "qa_question": {""}, "qa_answer": {"No question"}}, true)
+	expect(t, r, http.StatusUnprocessableEntity, `id="section-qa"`, "Question is required")
 
 	// Without htmx the whole page comes back with the section in edit mode.
 	r = a.post("/applications/"+appID+"/sections/job", url.Values{"title": {""}}, false)
@@ -325,16 +333,34 @@ func TestConflictDetected(t *testing.T) {
 	expect(t, a.get("/applications/"+appID, false), 200, "Edited by hand")
 }
 
-// Interviews and Q&A are shown in cards of their own. They show "Not set"
-// while empty and come back out of band when the process is saved.
-func TestProcessPartCards(t *testing.T) {
+// Interviews and Q&A are stored with the hiring process but edited in
+// their own cards: the process form leaves them alone, and saving one
+// doesn't conflict with an open form for another.
+func TestInterviewsAndQASections(t *testing.T) {
 	a := newTestApp(t, false)
 	a.create()
-	expect(t, a.get("/applications/"+appID, false), 200, "data-columns",
-		`id="section-process-qa" class="section" data-edit-section="process" hx-swap-oob="true"><header`)
-	r := a.post("/applications/"+appID+"/sections/process", url.Values{"interview_date": {"2026-10-14T10:00"}, "interview_type": {"Technical"}}, true)
-	expect(t, r, 200, `id="section-process"`,
-		`id="section-process-interviews" class="section" data-edit-section="process" hx-swap-oob="true">`, "Interview 1")
+	expect(t, a.get("/applications/"+appID, false), 200,
+		`href="/applications/`+appID+`/sections/interviews/edit" data-edit-field="interview_date">Not set</a>`,
+		`href="/applications/`+appID+`/sections/qa/edit" data-edit-field="qa_question">Not set</a>`)
+	process := a.get("/applications/"+appID+"/sections/process/edit", true)
+	expect(t, process, 200, `name="nextStep"`)
+	if strings.Contains(process.body, "interview_date") || strings.Contains(process.body, "qa_question") {
+		t.Error("the process form still edits interviews or Q&A")
+	}
+	expect(t, a.get("/applications/"+appID+"/sections/interviews/edit", true), 200, `name="interview_date"`, "Add round")
+	expect(t, a.get("/applications/"+appID+"/sections/qa/edit", true), 200, `name="qa_question"`, "Add question")
+
+	r := a.post("/applications/"+appID+"/sections/interviews", url.Values{"interview_date": {"2026-10-14T10:00"}, "interview_type": {"Technical"}}, true)
+	expect(t, r, 200, `id="section-interviews"`, "Interview 1")
+	r = a.post("/applications/"+appID+"/sections/qa", url.Values{"qa_round": {"1"}, "qa_question": {"Design a cache"}}, true)
+	expect(t, r, 200, `id="section-qa"`, "Design a cache")
+	expect(t, a.post("/applications/"+appID+"/sections/process", url.Values{"rev": {rev(t, process.body)}, "nextStep": {"Onsite"}}, true), 200, "Onsite")
+	y := a.readFile("applications/" + appID + "/application.yaml")
+	for _, want := range []string{"nextStep: Onsite", "type: Technical", "question: Design a cache"} {
+		if !strings.Contains(y, want) {
+			t.Errorf("missing %q:\n%s", want, y)
+		}
+	}
 }
 
 // The cards come in a fixed order: one group per column, left to right.
@@ -348,7 +374,7 @@ func TestDetailCardOrder(t *testing.T) {
 		{"section-company", "section-contacts"},
 		{"section-job", "attachments"},
 		{"section-process", "section-compensation"},
-		{"section-process-interviews", "section-process-qa"},
+		{"section-interviews", "section-qa"},
 		{"section-notes", "section-lessons"},
 	}
 	if len(groups) != len(want) {

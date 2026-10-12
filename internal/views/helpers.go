@@ -82,7 +82,7 @@ func keyDates(d DetailData) []keyDate {
 	add("Next step", p.NextStepDate, p.NextStepDate.Display(), p.NextStep, true, "process", "nextStep")
 	for i, iv := range p.Interviews {
 		if !iv.Date.IsZero() && !iv.Date.Date().Before(today) {
-			add("Next interview", iv.Date.Date(), iv.Date.Display(), "Interview "+strconv.Itoa(i+1)+" "+iv.Type, false, "process", "interview_date")
+			add("Next interview", iv.Date.Date(), iv.Date.Display(), "Interview "+strconv.Itoa(i+1)+" "+iv.Type, false, "interviews", "interview_date")
 			break
 		}
 	}

@@ -348,7 +348,14 @@ func copySection(name string, dst, src *model.Application) {
 	case "contacts":
 		dst.Contacts = src.Contacts
 	case "process":
+		// Interviews and Q&A are sections of their own.
+		iv, qa := dst.Process.Interviews, dst.Process.QA
 		dst.Process = src.Process
+		dst.Process.Interviews, dst.Process.QA = iv, qa
+	case "interviews":
+		dst.Process.Interviews = src.Process.Interviews
+	case "qa":
+		dst.Process.QA = src.Process.QA
 	case "compensation":
 		dst.Compensation = src.Compensation
 	case "notes":
@@ -387,8 +394,14 @@ func (s *Server) sectionSave(w http.ResponseWriter, r *http.Request) {
 		edited.Contacts = bindContacts(f)
 		errs = model.ValidateContacts(&edited.Contacts)
 	case "process":
-		edited.Process = bindProcess(f)
-		errs = model.ValidateProcess(&edited.Process)
+		p := bindProcess(f)
+		p.Interviews, p.QA = edited.Process.Interviews, edited.Process.QA
+		edited.Process = p
+	case "interviews":
+		edited.Process.Interviews = bindInterviews(f)
+	case "qa":
+		edited.Process.QA = bindQA(f)
+		errs = model.ValidateQA(edited.Process.QA)
 	case "compensation":
 		edited.Compensation = bindCompensation(f)
 		errs = model.ValidateCompensation(&edited.Compensation)
