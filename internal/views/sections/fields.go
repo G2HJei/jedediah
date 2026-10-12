@@ -53,14 +53,6 @@ func compensationFields(d Data) fields {
 	return f
 }
 
-func otherFields(d Data) fields {
-	var f fields
-	o := d.App.Other
-	f.add("Lessons learned", "lessonsLearned", o.LessonsLearned == "", components.Markdown(o.LessonsLearned))
-	f.add("Notes", "notes", o.Notes == "", components.Markdown(o.Notes))
-	return f
-}
-
 func processFields(d Data) fields {
 	var f fields
 	p := d.App.Process
@@ -69,9 +61,6 @@ func processFields(d Data) fields {
 	f.add("Last contact", "lastContactDate", p.LastContactDate.IsZero(), dateValue(p.LastContactDate, d.Today))
 	f.add("Date applied", "dateApplied", p.DateApplied.IsZero(), dateValue(p.DateApplied, d.Today))
 	f.add("Screening", "screeningDate", p.ScreeningDate.IsZero(), dateTimeValue(p.ScreeningDate, d.Today))
-	if len(p.Interviews) == 0 { // otherwise shown in a card of their own
-		f.add("Interviews", "interview_date", true, nil)
-	}
 	f.add("Follow-up date", "followUpDate", p.FollowUpDate.IsZero(), dateValue(p.FollowUpDate, d.Today))
 	f.add("Offer date", "offerDate", p.OfferDate.IsZero(), dateValue(p.OfferDate, d.Today))
 	f.add("Take-home task", "takeHomeDetails", p.TakeHome.Details == "", components.Markdown(p.TakeHome.Details))
@@ -79,9 +68,6 @@ func processFields(d Data) fields {
 	f.add("Decision", "decision", p.Decision == "", decisionValue(d))
 	f.add("Rejection reason / feedback", "rejectionFeedback", p.RejectionFeedback == "", components.Markdown(p.RejectionFeedback))
 	f.add("Offer response deadline", "offerResponseDeadline", p.OfferResponseDeadline.IsZero(), dateValue(p.OfferResponseDeadline, d.Today))
-	if len(p.QA) == 0 { // otherwise shown in a card of their own
-		f.add("Questions & answers", "qa_question", true, nil)
-	}
 	return f
 }
 

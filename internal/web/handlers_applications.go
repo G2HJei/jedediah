@@ -351,8 +351,10 @@ func copySection(name string, dst, src *model.Application) {
 		dst.Process = src.Process
 	case "compensation":
 		dst.Compensation = src.Compensation
-	case "other":
-		dst.Other = src.Other
+	case "notes":
+		dst.Other.Notes = src.Other.Notes
+	case "lessons":
+		dst.Other.LessonsLearned = src.Other.LessonsLearned
 	}
 }
 
@@ -390,8 +392,10 @@ func (s *Server) sectionSave(w http.ResponseWriter, r *http.Request) {
 	case "compensation":
 		edited.Compensation = bindCompensation(f)
 		errs = model.ValidateCompensation(&edited.Compensation)
-	case "other":
-		edited.Other = bindOther(f)
+	case "notes":
+		edited.Other.Notes = f.text("notes")
+	case "lessons":
+		edited.Other.LessonsLearned = f.text("lessonsLearned")
 	}
 	f.errs.Merge(errs) // parse errors take precedence over validation messages
 	if len(f.errs) > 0 {

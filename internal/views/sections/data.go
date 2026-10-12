@@ -1,4 +1,4 @@
-// Package sections renders the six field-group cards on the application
+// Package sections renders the field-group cards on the application
 // detail page. Each group has a view and an edit partial; the edit partial
 // swaps in place of the view card and back again.
 package sections
@@ -15,7 +15,7 @@ import (
 )
 
 // Names lists the sections in display order.
-var Names = []string{"company", "job", "contacts", "process", "compensation", "other"}
+var Names = []string{"company", "job", "contacts", "process", "compensation", "notes", "lessons"}
 
 var titles = map[string]string{
 	"company":      "Company",
@@ -23,7 +23,8 @@ var titles = map[string]string{
 	"contacts":     "Contacts",
 	"process":      "Hiring Process",
 	"compensation": "Compensation",
-	"other":        "Other",
+	"notes":        "Notes",
+	"lessons":      "Lessons learned",
 }
 
 // Valid reports whether name is a section.
@@ -72,8 +73,10 @@ func Rev(name string, a model.Application, c model.Company) string {
 		return model.Rev(a.Process)
 	case "compensation":
 		return model.Rev(a.Compensation)
-	case "other":
-		return model.Rev(a.Other)
+	case "notes":
+		return model.Rev(a.Other.Notes)
+	case "lessons":
+		return model.Rev(a.Other.LessonsLearned)
 	}
 	return ""
 }

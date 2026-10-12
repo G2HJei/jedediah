@@ -56,11 +56,6 @@ func companyFormAction(d CompanyFormData) string {
 	return "/companies/" + d.Company.ID
 }
 
-// detailCards is the order of the section cards on the application page.
-// app.js deals them into as many columns as fit, each into the shortest
-// column, so the first ones form the top row.
-var detailCards = []string{"process", "job", "contacts", "company", "compensation", "other"}
-
 // keyDate is a date in the application header. Section and Field name the
 // edit form input that clicking it opens.
 type keyDate struct {

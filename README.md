@@ -16,9 +16,10 @@ embedded in the binary, so it works offline.
 - **Applications table**: sort, filter, free-text search (company, title, notes, contacts) and a
   "show closed" toggle. Filtered URLs can be bookmarked. Change priority and status right in the
   table; click anywhere else on a row to open it.
-- **Application page** with six section cards (Company, Job Application, Contacts, Hiring Process,
-  Compensation, Other; interviews and Q&A get cards of their own) spread over as many columns as
-  fit the window, so a wide screen shows everything without scrolling. Click any field, empty
+- **Application page** with section cards in five columns, left to right: Company and Contacts,
+  Job Application and Attachments, Hiring Process and Compensation, Interviews and Q&A, then Notes
+  and Lessons learned. A wide screen shows everything without scrolling; on a narrower one the
+  columns that don't fit go under the shortest ones. Click any field, empty
   field name or header date to edit it in place. It also has inline status/priority selects and a
   "Contacted today" button.
 - **Repeatable entries**: recruiters, interviewers, interview rounds (Interview 1, 2, 3, …),

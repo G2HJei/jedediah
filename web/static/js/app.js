@@ -123,10 +123,12 @@
     cancel.click();
   }
 
-  // ---- Card columns: as many as fit, as evenly filled as possible ----
-  // Cards keep their column while they are edited; they are only dealt again
-  // when the window size changes the number of columns. Within a column the
-  // cards keep page order. Without JavaScript the container is a CSS grid.
+  // ---- Card columns: one per card group, in page order ----
+  // Each group of cards gets a column of its own when they all fit; the
+  // groups that don't fit go under the shortest column. Groups keep their
+  // column while cards are edited; they are only dealt again when the window
+  // size changes the number of columns. Without JavaScript the container is
+  // a CSS grid.
   var COLUMN_REM = 25;
 
   function columnCount(box) {
@@ -136,14 +138,11 @@
   }
 
   function layoutColumns(box, force) {
-    var n = columnCount(box);
+    // htmx swaps the cards but never the groups, so these stay valid.
+    if (!box.groups) box.groups = Array.prototype.slice.call(box.children);
+    var n = Math.min(box.groups.length, columnCount(box));
     if (!force && box.dataset.count === String(n)) return;
     box.dataset.count = n;
-    // Cards are found by id because htmx swaps replace the elements.
-    if (!box.cardIDs) {
-      box.cardIDs = Array.prototype.map.call(box.children, function (el) { return el.id; });
-    }
-    var cards = box.cardIDs.map(function (id) { return document.getElementById(id); }).filter(Boolean);
     box.classList.add("dealt");
     box.textContent = "";
     var cols = [];
@@ -151,50 +150,10 @@
       cols.push(box.appendChild(document.createElement("div")));
       cols[i].className = "card-column";
     }
-    // Measure every card at the column width, then pick its column.
-    cards.forEach(function (card) { cols[0].appendChild(card); });
-    var heights = cards.map(function (card) {
-      return card.offsetHeight + (parseFloat(getComputedStyle(card).marginBottom) || 0);
+    box.groups.forEach(function (group, i) {
+      var col = cols[i] || cols.reduce(function (a, b) { return b.offsetHeight < a.offsetHeight ? b : a; });
+      col.appendChild(group);
     });
-    var where = balance(heights, n);
-    // Columns go left to right by their first card in page order.
-    var rank = [];
-    for (var c = 0; c < n; c++) rank.push(c);
-    var first = function (c) { var i = where.indexOf(c); return i < 0 ? Infinity : i; };
-    rank.sort(function (a, b) { return first(a) - first(b); });
-    cards.forEach(function (card, i) { cols[rank.indexOf(where[i])].appendChild(card); });
-  }
-
-  // balance splits heights into n columns, keeping the tallest column as
-  // short as it can: longest first into the shortest column, then cards are
-  // moved or swapped out of the tallest column while that helps.
-  function balance(heights, n) {
-    var where = [], sums = [];
-    for (var c = 0; c < n; c++) sums.push(0);
-    var argmin = function () { return sums.indexOf(Math.min.apply(null, sums)); };
-    var byHeight = heights.map(function (_, i) { return i; }).sort(function (a, b) { return heights[b] - heights[a]; });
-    byHeight.forEach(function (i) { var c = argmin(); where[i] = c; sums[c] += heights[i]; });
-    var put = function (i, c) { sums[where[i]] -= heights[i]; sums[c] += heights[i]; where[i] = c; };
-    for (var round = 0; round < 100; round++) {
-      var top = sums.indexOf(Math.max.apply(null, sums));
-      if (!improve(top)) break;
-    }
-    return where;
-
-    function improve(top) {
-      for (var i = 0; i < heights.length; i++) {
-        if (where[i] !== top) continue;
-        for (var c = 0; c < n; c++) {
-          if (c === top) continue;
-          if (sums[c] + heights[i] < sums[top]) { put(i, c); return true; }
-          for (var j = 0; j < heights.length; j++) {
-            var d = heights[i] - heights[j];
-            if (where[j] === c && d > 0 && sums[c] + d < sums[top]) { put(i, c); put(j, top); return true; }
-          }
-        }
-      }
-      return false;
-    }
   }
 
   function layoutAll(force) {

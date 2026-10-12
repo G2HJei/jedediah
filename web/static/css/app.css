@@ -309,13 +309,13 @@ table.pipeline tr.closed th { color: var(--pico-muted-color); }
 
 /* ---- Application detail ---- */
 
-/* Cards fill the width in as many columns as fit: app.js deals them into
-   .card-column elements, each card into the shortest. Without JavaScript
-   this is a plain grid. */
+/* Each .card-group gets a column: app.js deals the groups into
+   .card-column elements, one each while they fit, the rest into the
+   shortest. Without JavaScript this is a plain grid of groups. */
 .card-columns { display: grid; grid-template-columns: repeat(auto-fill, minmax(25rem, 1fr)); gap: 0 var(--gap); align-items: start; }
 .card-columns.dealt { display: flex; align-items: flex-start; }
 .card-column { flex: 1 1 0; min-width: 0; }
-.card-column > :last-child, .card-columns > :last-child { margin-bottom: 0; }
+.card-column > :last-child > :last-child { margin-bottom: 0; }
 body > main { padding-bottom: .5rem; }
 
 /* One row: title, key dates, then the selects and actions. */
@@ -344,7 +344,7 @@ article.section.editing { outline: 2px solid var(--pico-primary-border); }
 /* Click a field (or a header date) to edit it (app.js). */
 [data-edit-field] { cursor: pointer; }
 dl.fields > dt[data-edit-field]:hover, dl.fields > dt:hover + dd, dl.fields > dd[data-edit-field]:hover,
-dl.fields > dt:has(+ dd:hover), .contact-group[data-edit-field]:hover, .key-dates li[data-edit-field]:hover {
+dl.fields > dt:has(+ dd:hover), .contact-group[data-edit-field]:hover, .text-field[data-edit-field]:hover, .key-dates li[data-edit-field]:hover {
   background-color: var(--hover); border-radius: var(--pico-border-radius);
 }
 .empty-fields a { color: inherit; text-decoration: underline dotted; text-underline-offset: .2em; }
@@ -355,6 +355,7 @@ dl.fields { display: grid; grid-template-columns: minmax(6.5rem, 9.5rem) minmax(
 dl.fields > dt, dl.fields > dd { padding: .15rem .25rem; }
 dl.fields dt { color: var(--pico-muted-color); font-size: .85rem; }
 dl.fields dd { margin: 0; overflow-wrap: anywhere; }
+.text-field { padding: .15rem .25rem; margin-bottom: .5rem; overflow-wrap: anywhere; }
 .md > :last-child { margin-bottom: 0; }
 .md p, .md ul, .md ol { margin-bottom: .35rem; }
 

@@ -226,10 +226,3 @@ func bindCompensation(f *form) model.Compensation {
 		StartDate:    f.date("startDate", "compensation.startDate"),
 	}
 }
-
-func bindOther(f *form) model.Other {
-	return model.Other{
-		LessonsLearned: f.text("lessonsLearned"),
-		Notes:          f.text("notes"),
-	}
-}

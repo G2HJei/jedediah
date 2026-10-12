@@ -205,7 +205,6 @@ templ processView(d Data) {
 	@viewCard(d, "process") {
 		@fieldList(processFields(d), d.sectionURL("process")+"/edit")
 	}
-	@processParts(d)
 }
 
 // processParts shows interviews and questions in cards of their own.
@@ -327,16 +326,23 @@ templ compensationEdit(d Data) {
 	}
 }
 
-// ---- Other ----
-templ otherView(d Data) {
-	@viewCard(d, "other") {
-		@fieldList(otherFields(d), d.sectionURL("other")+"/edit")
+// ---- Notes, Lessons learned ----
+// Each is a single Markdown field, so the card title is its label and the
+// text gets the whole width.
+templ textView(d Data, name, field, value string) {
+	@viewCard(d, name) {
+		if value == "" {
+			@notSet(d.sectionURL(name)+"/edit", field)
+		} else {
+			<div class="text-field" data-edit-field={ field }>
+				@components.Markdown(value)
+			</div>
+		}
 	}
 }
 
-templ otherEdit(d Data) {
-	@editCard(d, "other", nil) {
-		@components.TextArea("Lessons learned (Markdown)", "lessonsLearned", d.App.Other.LessonsLearned, "", 4)
-		@components.TextArea("Notes (Markdown)", "notes", d.App.Other.Notes, "", 6)
+templ textEdit(d Data, name, label, field, value string, rows int) {
+	@editCard(d, name, nil) {
+		@components.TextArea(label, field, value, "", rows)
 	}
 }

@@ -5,6 +5,9 @@ import (
 	"github.com/G2HJei/job-search-tracker/internal/views/sections"
 )
 
+// DetailPage shows the section cards in groups, left to right. app.js gives
+// each group a column of its own when they all fit; otherwise the groups
+// that do not fit go under the shortest column.
 templ DetailPage(p Page, d DetailData) {
 	@Layout(p) {
 		@DetailHeader(d, false)
@@ -16,10 +19,25 @@ templ DetailPage(p Page, d DetailData) {
 			</div>
 		}
 		<div class="card-columns" data-columns>
-			for _, name := range detailCards {
-				@sectionCard(d, name)
-			}
-			@attachments(d)
+			<div class="card-group">
+				@sectionCard(d, "company")
+				@sectionCard(d, "contacts")
+			</div>
+			<div class="card-group">
+				@sectionCard(d, "job")
+				@attachments(d)
+			</div>
+			<div class="card-group">
+				@sectionCard(d, "process")
+				@sectionCard(d, "compensation")
+			</div>
+			<div class="card-group">
+				@sections.Parts("process", d.Base)
+			</div>
+			<div class="card-group">
+				@sectionCard(d, "notes")
+				@sectionCard(d, "lessons")
+			</div>
 		</div>
 	}
 }
@@ -27,9 +45,8 @@ templ DetailPage(p Page, d DetailData) {
 templ sectionCard(d DetailData, name string) {
 	if name == d.EditName {
 		@sections.Edit(name, d.EditData)
-		@sections.Parts(name, d.Base)
 	} else {
-		@sections.View(name, d.Base)
+		@sections.Card(name, d.Base)
 	}
 }
 

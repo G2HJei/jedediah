@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -200,8 +201,11 @@ func TestCreateEditEverySection(t *testing.T) {
 			"noticePeriod": {"1 month"}, "startDate": {"2026-11-02"}},
 			[]string{"£92,000+ / year", "Permanent", "1 month", "2 Nov 2026"},
 			[]string{"asked: {min: 92000, currency: GBP, period: year}", "startDate: 2026-11-02"}},
-		{"other", url.Values{"lessonsLearned": {"Ask about on-call"}, "notes": {"Line one\r\nLine two"}},
-			[]string{"Ask about on-call", "Line one<br>"}, []string{"notes: |\n    Line one\n    Line two\n"}},
+		{"notes", url.Values{"notes": {"Line one\r\nLine two"}},
+			[]string{"Line one<br>"}, []string{"notes: |\n    Line one\n    Line two\n"}},
+		// Saving lessons learned keeps the notes.
+		{"lessons", url.Values{"lessonsLearned": {"Ask about on-call"}},
+			[]string{"Ask about on-call"}, []string{"lessonsLearned: Ask about on-call", "notes: |\n    Line one\n"}},
 	}
 	for _, s := range sections {
 		t.Run(s.name, func(t *testing.T) {
@@ -267,10 +271,10 @@ func TestValidationErrorsRerenderForm(t *testing.T) {
 func TestNoJSFlow(t *testing.T) {
 	a := newTestApp(t, false)
 	a.create()
-	expect(t, a.get("/applications/"+appID+"/sections/other/edit", false), 200, "<!doctype html>", `name="lessonsLearned"`)
-	r := a.post("/applications/"+appID+"/sections/other", url.Values{"notes": {"plain post"}}, false)
+	expect(t, a.get("/applications/"+appID+"/sections/lessons/edit", false), 200, "<!doctype html>", `name="lessonsLearned"`)
+	r := a.post("/applications/"+appID+"/sections/notes", url.Values{"notes": {"plain post"}}, false)
 	expect(t, r, http.StatusSeeOther)
-	if r.Header.Get("Location") != "/applications/"+appID+"#section-other" {
+	if r.Header.Get("Location") != "/applications/"+appID+"#section-notes" {
 		t.Fatalf("Location = %q", r.Header.Get("Location"))
 	}
 	r = a.post("/applications/"+appID+"/status", url.Values{"status": {"screening"}, "return": {"/board"}}, false)
@@ -287,18 +291,24 @@ func TestNoJSFlow(t *testing.T) {
 func TestConflictDetected(t *testing.T) {
 	a := newTestApp(t, false)
 	a.create()
-	edit := a.get("/applications/"+appID+"/sections/other/edit", true)
+	edit := a.get("/applications/"+appID+"/sections/notes/edit", true)
 	oldRev := rev(t, edit.body)
 
 	// Another tab saves the same section first.
-	expect(t, a.post("/applications/"+appID+"/sections/other", url.Values{"rev": {oldRev}, "notes": {"from tab 1"}}, true), 200)
-	r := a.post("/applications/"+appID+"/sections/other", url.Values{"rev": {oldRev}, "notes": {"from tab 2"}}, true)
+	expect(t, a.post("/applications/"+appID+"/sections/notes", url.Values{"rev": {oldRev}, "notes": {"from tab 1"}}, true), 200)
+	r := a.post("/applications/"+appID+"/sections/notes", url.Values{"rev": {oldRev}, "notes": {"from tab 2"}}, true)
 	expect(t, r, http.StatusConflict, "changed elsewhere", "from tab 2")
 	if y := a.readFile("applications/" + appID + "/application.yaml"); !strings.Contains(y, "from tab 1") {
 		t.Fatalf("conflicting save overwrote:\n%s", y)
 	}
 	// Saving again from the conflict form overwrites deliberately.
-	expect(t, a.post("/applications/"+appID+"/sections/other", url.Values{"rev": {rev(t, r.body)}, "notes": {"from tab 2"}}, true), 200)
+	expect(t, a.post("/applications/"+appID+"/sections/notes", url.Values{"rev": {rev(t, r.body)}, "notes": {"from tab 2"}}, true), 200)
+
+	// Notes and lessons learned are stored together but edited apart, so
+	// saving one doesn't conflict with an open form for the other.
+	edit = a.get("/applications/"+appID+"/sections/lessons/edit", true)
+	expect(t, a.post("/applications/"+appID+"/sections/notes", url.Values{"notes": {"from tab 3"}}, true), 200)
+	expect(t, a.post("/applications/"+appID+"/sections/lessons", url.Values{"rev": {rev(t, edit.body)}, "lessonsLearned": {"Fine"}}, true), 200)
 
 	// Changes to other sections (like a status change) don't conflict.
 	edit = a.get("/applications/"+appID+"/sections/job/edit", true)
@@ -310,21 +320,50 @@ func TestConflictDetected(t *testing.T) {
 	b, _ := os.ReadFile(p)
 	os.WriteFile(p, bytes.Replace(b, []byte("Still fine"), []byte("Edited by hand"), 1), 0o644)
 	os.Chtimes(p, time.Now().Add(time.Minute), time.Now().Add(time.Minute))
-	expect(t, a.post("/applications/"+appID+"/sections/other", url.Values{"notes": {"x"}}, true), http.StatusConflict, "changed on disk")
+	expect(t, a.post("/applications/"+appID+"/sections/notes", url.Values{"notes": {"x"}}, true), http.StatusConflict, "changed on disk")
 	expect(t, a.post("/settings/reload", nil, false), http.StatusSeeOther)
 	expect(t, a.get("/applications/"+appID, false), 200, "Edited by hand")
 }
 
-// Interviews and Q&A are shown in cards of their own. They stay in the page
-// while empty (hidden) and come back out of band when the process is saved.
+// Interviews and Q&A are shown in cards of their own. They show "Not set"
+// while empty and come back out of band when the process is saved.
 func TestProcessPartCards(t *testing.T) {
 	a := newTestApp(t, false)
 	a.create()
 	expect(t, a.get("/applications/"+appID, false), 200, "data-columns",
-		`id="section-process-qa" class="section" data-edit-section="process" hx-swap-oob="true" hidden`)
+		`id="section-process-qa" class="section" data-edit-section="process" hx-swap-oob="true"><header`)
 	r := a.post("/applications/"+appID+"/sections/process", url.Values{"interview_date": {"2026-10-14T10:00"}, "interview_type": {"Technical"}}, true)
 	expect(t, r, 200, `id="section-process"`,
 		`id="section-process-interviews" class="section" data-edit-section="process" hx-swap-oob="true">`, "Interview 1")
+}
+
+// The cards come in a fixed order: one group per column, left to right.
+func TestDetailCardOrder(t *testing.T) {
+	a := newTestApp(t, false)
+	a.create()
+	r := a.get("/applications/"+appID, false)
+	expect(t, r, 200)
+	groups := strings.Split(r.body, `<div class="card-group">`)[1:]
+	want := [][]string{
+		{"section-company", "section-contacts"},
+		{"section-job", "attachments"},
+		{"section-process", "section-compensation"},
+		{"section-process-interviews", "section-process-qa"},
+		{"section-notes", "section-lessons"},
+	}
+	if len(groups) != len(want) {
+		t.Fatalf("%d card groups, want %d", len(groups), len(want))
+	}
+	for i, ids := range want {
+		got := regexp.MustCompile(`<article id="([^"]+)"`).FindAllStringSubmatch(groups[i], -1)
+		var names []string
+		for _, m := range got {
+			names = append(names, m[1])
+		}
+		if !slices.Equal(names, ids) {
+			t.Errorf("group %d = %v, want %v", i+1, names, ids)
+		}
+	}
 }
 
 func TestQuickActions(t *testing.T) {
@@ -480,7 +519,7 @@ func TestSecurity(t *testing.T) {
 	}
 
 	// User content is escaped and Markdown drops raw HTML and javascript: links.
-	expect(t, a.post("/applications/"+appID+"/sections/other", url.Values{
+	expect(t, a.post("/applications/"+appID+"/sections/notes", url.Values{
 		"notes": {"<img src=x onerror=alert(1)> [x](javascript:alert(1))"}}, true), 200)
 	r = a.get("/applications/"+appID, false)
 	if strings.Contains(r.body, "<img src=x") || strings.Contains(r.body, `href="javascript:`) {
