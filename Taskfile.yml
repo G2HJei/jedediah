@@ -51,6 +51,12 @@ tasks:
     cmds:
       - go build -trimpath -ldflags "{{.LDFLAGS}}" -o dist/jedediah{{exeExt}} ./cmd/jedediah
 
+  docker:
+    desc: Build the image from this checkout and run it in Docker (http://localhost:8765, data in ./data)
+    env: { VERSION: '{{.VERSION}}' }
+    cmds:
+      - docker compose up -d
+
   release:
     desc: Cross-compile for Windows, macOS and Linux (amd64 + arm64)
     deps: [generate]

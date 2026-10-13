@@ -66,6 +66,32 @@ Flags:
 Keyboard shortcuts: `n` starts a new application, and `/` focuses the search box. In an edit form,
 Ctrl+Enter (Cmd+Enter on a Mac) saves and Esc cancels; Esc asks first if you changed something.
 
+### Run in Docker
+
+The image is the same app without the tray icon and without opening a browser: start it, then open
+http://localhost:8765 yourself. It keeps its data in `/data`; mount a folder there, and it stays a
+plain folder of YAML you can read, edit and back up.
+
+CI pushes `<docker-user>/jedediah:latest` (and a numbered tag) to Docker Hub on every push to
+`master`. To run it:
+
+```powershell
+docker run -d --name jedediah --restart unless-stopped -p 127.0.0.1:8765:8765 `
+  -v "${PWD}/data:/data" -e TZ=Europe/Sofia <docker-user>/jedediah
+```
+
+Or build it from this checkout and run it with `compose.yaml`: `go tool task docker`. `docker
+compose down` stops it; the data stays in `data/`.
+
+- **Publish the port on `127.0.0.1`**, as above. Inside the container it listens on all interfaces,
+  and the app has no login.
+- **Set `TZ`** to your time zone. Without it, "today" and the overdue dates are in UTC.
+- **Update** with `docker pull <docker-user>/jedediah`, then `docker rm -f jedediah` and the same
+  `docker run`. The data folder is untouched.
+- **Flags** go after the image name, for example `… <docker-user>/jedediah --demo`.
+- **On Linux** the container runs as UID 65532, so give it the data folder (`sudo chown 65532
+  data`) or run it as yourself with `--user "$(id -u):$(id -g)"`.
+
 ## Your data
 
 ```
@@ -136,8 +162,16 @@ go tool task test      # templ generate + go test ./...
 go tool task lint      # go vet
 go tool task build     # dist/jedediah.exe with the version from git describe
 go tool task release   # cross-compile for Windows, macOS and Linux (amd64 + arm64)
+go tool task docker    # build the Docker image and run it with compose.yaml
 go tool task winres    # rebuild the Windows icon/manifest .syso after editing cmd/jedediah/winres/
 ```
+
+CI (`.github/workflows/ci.yml`) runs on every push to `master`, or by hand from the Actions tab. It
+runs `go vet`, checks that the committed `*_templ.go` files are up to date and runs the tests. Then
+it builds the image for amd64 and arm64 and pushes it to Docker Hub as
+`<DOCKER_USERNAME>/jedediah:<run number>` and `:latest`. It needs two repository secrets:
+`DOCKER_USERNAME` and `DOCKER_PASSWORD`, which should be a Docker Hub access token with Read & Write
+access.
 
 Generated `*_templ.go` files are committed, so plain `go build ./cmd/jedediah` works without templ.
 After changing a `.templ` file, run `go tool task generate` (air and the build tasks do this for
