@@ -16,4 +16,4 @@ services:
     volumes:
       - ./data:/data
     environment:
-      TZ: Europe/Sofia # "today", overdue actions and the calendar use it
+      TZ: UTC # your time zone, e.g. Europe/Sofia: "today", overdue actions and the calendar use it
