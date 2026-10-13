@@ -41,7 +41,7 @@ func openTest(t *testing.T, dir string) *Store {
 	return s
 }
 
-// exampleApplication mirrors the example in Plan.MD §4.
+// exampleApplication fills every group; its YAML is testdata/application.golden.yaml.
 func exampleApplication() model.Application {
 	return model.Application{
 		Priority:  "high",

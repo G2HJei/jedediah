@@ -14,7 +14,8 @@ import (
 	"github.com/G2HJei/job-search-tracker/internal/model"
 )
 
-// Names lists the sections in display order.
+// Names lists the valid section names. The page order is set in
+// application_detail.templ.
 var Names = []string{"company", "job", "contacts", "process", "interviews", "qa", "compensation", "notes", "lessons"}
 
 var titles = map[string]string{

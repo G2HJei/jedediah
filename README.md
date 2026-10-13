@@ -34,11 +34,12 @@ embedded in the binary, so it works offline.
 
 ## Install and run
 
-Download `jedediah.exe` (or build it, see below), put it in any folder and double-click it. It
-creates a `data/` folder next to itself and prints the address to open:
+Build `jedediah.exe` (`go tool task build`, see [Development](#development)), put it in any folder
+and double-click it. It creates a `data/` folder next to itself, opens the browser and prints the
+address:
 
 ```
-  Jedediah is running at http://127.0.0.1:8765
+  Jedediah 5ee7f97 is running at http://127.0.0.1:8765
   Data: C:\Tools\jedediah\data
   Press Ctrl+C to stop.
 ```
@@ -110,8 +111,8 @@ The app is meant for your machine only:
 - Cross-origin form posts are rejected (`http.CrossOriginProtection`), and requests with a
   foreign `Host` header are rejected too, which blocks DNS rebinding.
 - A strict Content-Security-Policy applies (`default-src 'self'`, no inline scripts).
-- Saved HTML job postings open in a sandbox, so their scripts can't run. Other files are
-  downloaded rather than displayed.
+- Saved HTML job postings open in a sandbox, so their scripts can't run. PDFs, images and text
+  files open in the browser; anything else is downloaded.
 - File access is confined to the data folder (`os.Root`). Uploads are limited to 25 MB.
 
 ## Development
@@ -141,7 +142,7 @@ Layout:
 | `internal/model` | domain types, dates, validation, events, dashboard logic (no I/O) |
 | `internal/store` | the only code that touches `data/`: load, atomic writes, trash, files |
 | `internal/web` | routes, handlers, form binding, htmx-aware rendering, security middleware |
-| `internal/views` | templ pages; `components/` (inputs, pills, Markdown) and `sections/` (the six cards) |
+| `internal/views` | templ pages; `components/` (inputs, pills, Markdown) and `sections/` (the field cards; Attachments is in `application_detail.templ`) |
 | `internal/demo` | embedded fake sample data for `--demo` and tests |
 | `web/static` | `app.css`, `app.js`, the Besley font (`fonts/`, SIL OFL) and the vendored htmx, SortableJS and Pico CSS (see `vendor/VERSIONS.md`) |
 

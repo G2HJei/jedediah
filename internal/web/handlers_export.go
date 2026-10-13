@@ -136,10 +136,10 @@ func icsEscape(s string) string {
 }
 
 // icsFold writes a content line folded at 75 octets, without splitting a
-// UTF-8 character.
+// UTF-8 character. Continuation lines start with a space, so they carry 74.
 func icsFold(b *strings.Builder, line string) {
-	for len(line) > 75 {
-		cut := 75
+	for limit := 75; len(line) > limit; limit = 74 {
+		cut := limit
 		for cut > 0 && line[cut]&0xC0 == 0x80 {
 			cut--
 		}

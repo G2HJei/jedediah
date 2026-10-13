@@ -10,7 +10,7 @@ import (
 // DefaultConfigYAML is written to data/config.yaml on first run.
 const DefaultConfigYAML = `schemaVersion: 1
 defaultCurrency: EUR          # change to your currency
-staleAfterDays: 14            # active applications with no contact for this long are flagged
+staleAfterDays: 14            # active applications with no contact for this long and nothing scheduled are flagged
 upcomingDays: 14              # dashboard horizon
 priorities:                   # id is stored in application files; label/color are display-only
   - { id: high,   label: High,   color: red }

@@ -20,6 +20,17 @@
     toast(e.detail && e.detail.value);
   });
 
+  // Plain-text error bodies are messages, not markup. htmx swaps 409s (for the
+  // conflict forms), so a plain-text one would land in the target instead.
+  document.body.addEventListener("htmx:beforeSwap", function (e) {
+    var xhr = e.detail.xhr;
+    var type = xhr.getResponseHeader("Content-Type") || "";
+    if (xhr.status >= 400 && type.indexOf("text/plain") === 0) {
+      e.detail.shouldSwap = false;
+      e.detail.isError = true; // htmx then fires htmx:responseError
+    }
+  });
+
   document.body.addEventListener("htmx:responseError", function (e) {
     var xhr = e.detail.xhr;
     var type = xhr.getResponseHeader("Content-Type") || "";
@@ -149,9 +160,9 @@
   // ---- Card columns: one per card group, in page order ----
   // Each group of cards gets a column of its own when they all fit; the
   // groups that don't fit go under the shortest column. Groups keep their
-  // column while cards are edited; they are only dealt again when the window
-  // size changes the number of columns. Without JavaScript the container is
-  // a CSS grid.
+  // column while cards are edited; they are only dealt again once the heading
+  // font has loaded, or when the window size changes the number of columns.
+  // Without JavaScript the container is a CSS grid.
   var COLUMN_REM = 25;
 
   function columnCount(box) {

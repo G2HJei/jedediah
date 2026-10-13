@@ -70,7 +70,7 @@ type Process struct {
 type Interview struct {
 	Date         DateTime `yaml:"date,omitempty"`
 	Type         string   `yaml:"type,omitempty"`
-	Interviewers []string `yaml:"interviewers,omitempty,flow"` // names from contacts.interviewers
+	Interviewers []string `yaml:"interviewers,omitempty,flow"` // free-text names; contacts.interviewers are suggested
 	Notes        string   `yaml:"notes,omitempty"`
 }
 

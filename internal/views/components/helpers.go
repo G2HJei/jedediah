@@ -1,5 +1,5 @@
 // Package components holds small reusable view pieces: pills, ratings,
-// form inputs, contact rows and Markdown.
+// form inputs, contact fields and Markdown.
 package components
 
 import (

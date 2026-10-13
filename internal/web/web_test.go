@@ -16,6 +16,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/G2HJei/job-search-tracker/internal/demo"
 	"github.com/G2HJei/job-search-tracker/internal/store"
@@ -329,6 +330,13 @@ func TestConflictDetected(t *testing.T) {
 	os.WriteFile(p, bytes.Replace(b, []byte("Still fine"), []byte("Edited by hand"), 1), 0o644)
 	os.Chtimes(p, time.Now().Add(time.Minute), time.Now().Add(time.Minute))
 	expect(t, a.post("/applications/"+appID+"/sections/notes", url.Values{"notes": {"x"}}, true), http.StatusConflict, "changed on disk")
+	// One-click actions have no form to re-show, so the 409 is plain text,
+	// which app.js shows as a toast instead of swapping it into the header.
+	r = a.post("/applications/"+appID+"/touch", url.Values{"ctx": {"detail"}}, true)
+	expect(t, r, http.StatusConflict, "changed on disk")
+	if ct := r.Header.Get("Content-Type"); !strings.HasPrefix(ct, "text/plain") {
+		t.Errorf("Content-Type = %q", ct)
+	}
 	expect(t, a.post("/settings/reload", nil, false), http.StatusSeeOther)
 	expect(t, a.get("/applications/"+appID, false), 200, "Edited by hand")
 }
@@ -664,6 +672,37 @@ func TestExports(t *testing.T) {
 	}
 	if len(zr.File) < 20 {
 		t.Errorf("backup has %d files", len(zr.File))
+	}
+}
+
+// icsFold keeps every physical line, continuations included, within 75
+// octets and never splits a UTF-8 character.
+func TestICSFold(t *testing.T) {
+	line := "DESCRIPTION:" + strings.Repeat("x", 100) + strings.Repeat("é", 60) + strings.Repeat("y", 100)
+	var b strings.Builder
+	icsFold(&b, line)
+	lines := strings.Split(strings.TrimSuffix(b.String(), "\r\n"), "\r\n")
+	if len(lines) < 4 {
+		t.Fatalf("want at least 4 lines, got %q", lines)
+	}
+	var unfolded strings.Builder
+	for i, l := range lines {
+		if len(l) > 75 {
+			t.Errorf("line %d is %d octets: %q", i, len(l), l)
+		}
+		if i > 0 {
+			if !strings.HasPrefix(l, " ") {
+				t.Fatalf("continuation line %d doesn't start with a space: %q", i, l)
+			}
+			l = l[1:]
+		}
+		if !utf8.ValidString(l) {
+			t.Errorf("line %d splits a character: %q", i, l)
+		}
+		unfolded.WriteString(l)
+	}
+	if unfolded.String() != line {
+		t.Errorf("unfolded = %q, want %q", unfolded.String(), line)
 	}
 }
 

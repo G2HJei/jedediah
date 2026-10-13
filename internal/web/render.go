@@ -56,8 +56,8 @@ func toast(w http.ResponseWriter, msg string) {
 	w.Header().Set("HX-Trigger", string(b))
 }
 
-// fail shows an error: plain text for htmx (shown as a toast), a full error
-// page otherwise.
+// fail shows an error: plain text for htmx (app.js shows it as a toast and
+// never swaps it, whatever the status), a full error page otherwise.
 func (s *Server) fail(w http.ResponseWriter, r *http.Request, status int, msg string) {
 	if isHX(r) {
 		http.Error(w, msg, status)

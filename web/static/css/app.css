@@ -318,7 +318,7 @@ table.pipeline tr.closed th { color: var(--pico-muted-color); }
 .card-column > :last-child > :last-child { margin-bottom: 0; }
 body > main { padding-bottom: .5rem; }
 
-/* One row: title, key dates, then the selects and actions. */
+/* One row: title, key dates, the next step, then the selects and actions. */
 .app-header { display: flex; align-items: center; gap: .5rem 2rem; flex-wrap: wrap; margin-bottom: .75rem; }
 .app-header h1 { --pico-font-size: 1.4rem; }
 .app-header hgroup { margin: 0; }

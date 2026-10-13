@@ -1,5 +1,6 @@
 // Package store is the only package that touches the data directory. It
-// loads everything into memory at startup, serves reads from memory, and
+// loads config, companies and applications into memory at startup and
+// serves them from memory (attachments and CVs are read from disk), and
 // writes to disk atomically before updating memory.
 package store
 
@@ -59,7 +60,8 @@ type Options struct {
 	Logger *slog.Logger     // defaults to slog.Default()
 }
 
-// Store holds all data in memory, guarded by one RWMutex.
+// Store holds config, companies and applications in memory, guarded by one
+// RWMutex.
 type Store struct {
 	dir  string
 	root *os.Root

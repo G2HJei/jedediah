@@ -10,7 +10,8 @@ import (
 )
 
 // htmxConfig makes htmx swap 422 (validation errors) and 409 (conflicts)
-// responses, keeps injected inline styles and eval off for the CSP, and
+// responses (app.js turns plain-text ones into toasts instead), keeps
+// injected inline styles and eval off for the CSP, and
 // always reloads pages on back/forward so data is never stale.
 const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"422","swap":true},{"code":"409","swap":true},{"code":"[45]..","swap":false,"error":true}],"includeIndicatorStyles":false,"allowEval":false,"historyCacheSize":0,"refreshOnHistoryMiss":true}`
 
