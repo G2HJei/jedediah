@@ -1,0 +1,19 @@
+# Jedediah in Docker, built from this checkout: `go tool task docker` (or
+# `docker compose up -d`), then open http://localhost:8765. `docker compose down`
+# stops it; the data stays in ./data, the same folder `go tool task run` uses.
+services:
+  jedediah:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-dev}
+    image: jedediah
+    pull_policy: build
+    container_name: jedediah
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:8765:8765 # this machine only: the app has no login
+    volumes:
+      - ./data:/data
+    environment:
+      TZ: Europe/Sofia # "today", overdue actions and the calendar use it

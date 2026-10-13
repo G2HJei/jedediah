@@ -1,0 +1,7 @@
+# Only what `go build` needs. Above all, never data/: it holds personal information.
+*
+!go.mod
+!go.sum
+!cmd
+!internal
+!web
