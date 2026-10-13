@@ -7,8 +7,7 @@
 *.exe
 
 # IDE
-.idea/workspace.xml
-.idea/shelf/
+.idea/
 
 # Browser automation artefacts
 /.playwright-mcp/
