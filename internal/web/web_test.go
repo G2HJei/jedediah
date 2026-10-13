@@ -718,7 +718,11 @@ func TestBlankRows(t *testing.T) {
 
 func TestStaticAndHealth(t *testing.T) {
 	a := newTestApp(t, false)
-	expect(t, a.get("/healthz", false), 200, "ok")
+	health := a.get("/healthz", false)
+	expect(t, health, 200, "ok")
+	if v := health.Header.Get(VersionHeader); v != "test" {
+		t.Errorf("/healthz %s = %q, want %q", VersionHeader, v, "test")
+	}
 	expect(t, a.get("/static/vendor/htmx.min.js", false), 200, "htmx")
 	expect(t, a.get("/static/css/app.css", false), 200, ".pill")
 	expect(t, a.get("/nope", false), 404, "There is nothing at /nope")

@@ -12,6 +12,11 @@ tasks:
     cmds:
       - go tool templ generate
 
+  winres:
+    desc: Rebuild the Windows icon, manifest and version info (cmd/jedediah/rsrc_windows_*.syso, committed)
+    cmds:
+      - go tool go-winres make --in cmd/jedediah/winres/winres.json --out cmd/jedediah/rsrc --arch amd64,arm64
+
   dev:
     desc: Live reload (open http://127.0.0.1:8766 for browser auto-refresh)
     cmds:

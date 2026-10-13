@@ -35,14 +35,22 @@ embedded in the binary, so it works offline.
 ## Install and run
 
 Build `jedediah.exe` (`go tool task build`, see [Development](#development)), put it in any folder
-and double-click it. It creates a `data/` folder next to itself, opens the browser and prints the
-address:
+and double-click it. It creates a `data/` folder next to itself, opens the browser and keeps running
+in the background with a tray icon. Click the icon to open Jedediah again; right-click it and choose
+**Quit** to stop it. Starting it again while it runs opens the browser at the running copy.
+
+On Windows 11 24H2 and later no console window appears. Older Windows shows one for a moment.
+Errors that stop it from starting are shown in a dialog.
+
+Started from a terminal, it prints the address and logs there, and Ctrl+C stops it too:
 
 ```
   Jedediah 5ee7f97 is running at http://127.0.0.1:8765
   Data: C:\Tools\jedediah\data
-  Press Ctrl+C to stop.
+  Quit from the tray icon, or press Ctrl+C.
 ```
+
+The tray icon is Windows-only; on macOS and Linux, stop it with Ctrl+C.
 
 Flags:
 
@@ -52,7 +60,7 @@ Flags:
 | `--data` | `$JEDEDIAH_DATA_DIR`, else `data/` next to the executable | Data directory |
 | `--open` | on | Open the browser once the server is ready; `--open=false` to skip |
 | `--demo` | off | Run on a temporary copy of built-in fake data; changes are discarded on exit |
-| `--dev` | off | Serve static files from `web/static` on disk, no caching, debug logs |
+| `--dev` | off | Serve static files from `web/static` on disk, no caching, debug logs, no tray icon |
 | `--version` | | Print the version |
 
 Keyboard shortcuts: `n` starts a new application, and `/` focuses the search box. In an edit form,
@@ -128,17 +136,23 @@ go tool task test      # templ generate + go test ./...
 go tool task lint      # go vet
 go tool task build     # dist/jedediah.exe with the version from git describe
 go tool task release   # cross-compile for Windows, macOS and Linux (amd64 + arm64)
+go tool task winres    # rebuild the Windows icon/manifest .syso after editing cmd/jedediah/winres/
 ```
 
 Generated `*_templ.go` files are committed, so plain `go build ./cmd/jedediah` works without templ.
 After changing a `.templ` file, run `go tool task generate` (air and the build tasks do this for
 you).
 
+The Windows icon, manifest and version info are in `cmd/jedediah/winres/` and compiled into the
+committed `cmd/jedediah/rsrc_windows_*.syso`, which `go build` links in. After changing anything in
+`winres/`, run `go tool task winres`. The manifest's `consoleAllocationPolicy` is what hides the
+console. `tray.ico` is the simplified small-size artwork, embedded for the tray icon.
+
 Layout:
 
 | Path | What |
 |---|---|
-| `cmd/jedediah` | flags, wiring, graceful shutdown, `--open` |
+| `cmd/jedediah` | flags, wiring, graceful shutdown, `--open`, tray icon and Windows resources (`winres/`) |
 | `internal/model` | domain types, dates, validation, events, dashboard logic (no I/O) |
 | `internal/store` | the only code that touches `data/`: load, atomic writes, trash, files |
 | `internal/web` | routes, handlers, form binding, htmx-aware rendering, security middleware |

@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -30,8 +31,9 @@ import (
 var version = "dev"
 
 func main() {
+	detachConsole()
 	if err := run(); err != nil {
-		fmt.Fprintln(os.Stderr, "jedediah:", err)
+		reportFatal(err)
 		os.Exit(1)
 	}
 }
@@ -60,7 +62,17 @@ func run() error {
 	// Bind first, so a second instance fails before touching the data directory.
 	ln, err := net.Listen("tcp", *addr)
 	if err != nil {
-		return fmt.Errorf("cannot listen on %s: %w\nIs Jedediah already running? Open http://%s", *addr, err, *addr)
+		url := "http://" + browserAddr(*addr)
+		// Started again while it runs in the background: show the running
+		// instance, unless this start asked for other data.
+		if !*demoFlag && *dataFlag == "" && runningAt(url, 5*time.Second) {
+			fmt.Printf("Jedediah is already running at %s\n", url)
+			if *openFlag {
+				return openBrowser(url)
+			}
+			return nil
+		}
+		return fmt.Errorf("cannot listen on %s: %w\nIs Jedediah already running? Open %s", *addr, err, url)
 	}
 	defer ln.Close()
 
@@ -74,7 +86,8 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("open data directory %s: %w", dir, err)
 	}
-	defer st.Close()
+	closeStore := sync.OnceValue(st.Close)
+	defer closeStore()
 
 	static := webassets.Static()
 	if *dev {
@@ -88,28 +101,61 @@ func run() error {
 	srv := web.New(web.Options{Store: st, Static: static, Dev: *dev, Version: version, Addr: *addr, Logger: log})
 	httpSrv := &http.Server{Handler: srv.Handler(), ReadHeaderTimeout: 10 * time.Second}
 
-	url := "http://" + browserAddr(ln.Addr().(*net.TCPAddr))
-	fmt.Printf("\n  Jedediah %s is running at %s\n  Data: %s\n  Press Ctrl+C to stop.\n\n", version, url, st.Dir())
+	url := "http://" + browserAddr(ln.Addr().String())
+	// No tray with --dev: air restarts by killing the process, which would leave dead icons behind.
+	tray := hasTray && !*dev
+	stopHint := "Press Ctrl+C to stop."
+	if tray {
+		stopHint = "Quit from the tray icon, or press Ctrl+C."
+	}
+	fmt.Printf("\n  Jedediah %s is running at %s\n  Data: %s\n  %s\n\n", version, url, st.Dir(), stopHint)
 
-	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	defer stop()
-	errc := make(chan error, 1)
-	go func() { errc <- httpSrv.Serve(ln) }()
+	ctx, stopSignals := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stopSignals()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	// Serve until ctx is cancelled, then shut down and release the data
+	// directory. This runs apart from the tray so that the tray can wait for it
+	// when Windows ends the session.
+	var serveErr error
+	stopped := make(chan struct{})
+	go func() {
+		defer close(stopped)
+		defer cancel() // if Serve fails, stop the tray too
+		errc := make(chan error, 1)
+		go func() { errc <- httpSrv.Serve(ln) }()
+		select {
+		case serveErr = <-errc:
+		case <-ctx.Done():
+			log.Info("shutting down")
+			shutdownCtx, cancelShutdown := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancelShutdown()
+			serveErr = httpSrv.Shutdown(shutdownCtx)
+		}
+		closeStore()
+	}()
+
 	if *openFlag {
 		go openWhenReady(ctx, url, log)
 	}
-
-	select {
-	case err := <-errc:
-		if !errors.Is(err, http.ErrServerClosed) {
-			return err
+	if tray {
+		tooltip := "Jedediah – " + url
+		if *demoFlag {
+			tooltip = "Jedediah demo – " + url
 		}
-	case <-ctx.Done():
+		open := func() {
+			if err := openBrowser(url); err != nil {
+				log.Warn("could not open the browser", "err", err)
+			}
+		}
+		runTray(ctx, tooltip, open, func() { cancel(); <-stopped })
 	}
-	log.Info("shutting down")
-	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	return httpSrv.Shutdown(shutdownCtx)
+	<-stopped
+	if errors.Is(serveErr, http.ErrServerClosed) {
+		return nil
+	}
+	return serveErr
 }
 
 // dataDir resolves the data directory: --demo → temp copy of the sample
@@ -146,14 +192,6 @@ func dataDir(flagDir string, useDemo bool, log *slog.Logger) (string, func(), er
 		log.Warn("running from a temporary build folder (go run?); pass --data ./data to keep your data")
 	}
 	return filepath.Join(filepath.Dir(exe), "data"), noop, nil
-}
-
-// browserAddr turns the listen address into one a browser can open.
-func browserAddr(a *net.TCPAddr) string {
-	if a.IP == nil || a.IP.IsUnspecified() {
-		return fmt.Sprintf("127.0.0.1:%d", a.Port)
-	}
-	return a.String()
 }
 
 // openWhenReady waits for /healthz, then opens the default browser.

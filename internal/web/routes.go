@@ -2,6 +2,10 @@ package web
 
 import "net/http"
 
+// VersionHeader is set on /healthz, so a second jedediah process can tell
+// that the server on its port is Jedediah and not some other program.
+const VersionHeader = "X-Jedediah-Version"
+
 func (s *Server) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 
@@ -52,6 +56,7 @@ func (s *Server) routes() *http.ServeMux {
 	})
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set(VersionHeader, s.version)
 		w.Write([]byte("ok\n"))
 	})
 	mux.HandleFunc("/", s.notFound)

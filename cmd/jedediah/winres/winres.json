@@ -1,0 +1,27 @@
+{
+  "RT_GROUP_ICON": {
+    "APP": {
+      "0000": "jedediah.ico"
+    }
+  },
+  "RT_MANIFEST": {
+    "#1": {
+      "0409": "jedediah.manifest"
+    }
+  },
+  "RT_VERSION": {
+    "#1": {
+      "0000": {
+        "info": {
+          "0409": {
+            "FileDescription": "Jedediah",
+            "InternalName": "jedediah",
+            "LegalCopyright": "GPL-3.0",
+            "OriginalFilename": "jedediah.exe",
+            "ProductName": "Jedediah"
+          }
+        }
+      }
+    }
+  }
+}
