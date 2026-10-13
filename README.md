@@ -36,6 +36,8 @@ CSV export, and a ZIP backup.
 
 ## Run it
 
+Jedediah can be run as a Docker container or as a Windows `.exe`.
+
 ### With Docker
 
 Install [Docker Desktop](https://www.docker.com/products/docker-desktop/), then run this in a terminal:
@@ -55,9 +57,11 @@ Optional arguments:
 `--restart unless-stopped` Restarts Jedediah after a crash and whenever Docker starts..
 
 
-### As a Windows `.exe`
+### As a Windows executable
 
-Install [Go](https://go.dev/dl/) (1.27 or newer) and [Git](https://git-scm.com/downloads), then
+[Download the latest release](https://github.com/G2HJei/jedediah/releases/latest/download/jedediah.exe) or build the executable yourself following these steps:
+
+1. Install [Go](https://go.dev/dl/) (1.27 or newer) and [Git](https://git-scm.com/downloads), then
 run this in a terminal:
 
 ```bash
@@ -66,11 +70,9 @@ cd jedediah
 go build -o jedediah.exe ./cmd/jedediah
 ```
 
-Put `jedediah.exe` in any folder and double-click it. It opens Jedediah in your browser and keeps
+2. Put `jedediah.exe` in any folder and run it. It opens Jedediah in your browser and keeps
 your data in a `data` folder next to itself. To stop it, right-click the Jedediah icon in the tray
 and choose **Quit**.
-
-Run one or the other, not both: they use the same port.
 
 ## More
 
