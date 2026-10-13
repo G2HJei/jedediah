@@ -3,20 +3,29 @@
 _Named for Jedediah Smith (1799–1831), fur trapper and pathfinder of the American West._
 
 Jedediah tracks your job applications. It runs on your own computer and you use it in the browser:
-where you applied, who you talked to, upcoming interviews, and what to do next and when. Your data
-stays on your machine as plain YAML files you can read and back up. There is no account and no
-cloud, and it works offline.
+where you applied, who you talked to, upcoming interviews, and what to do next and when. 
 
-![Dashboard: overdue actions, follow-ups, the pipeline and the next two weeks](docs/screenshots/dashboard.png)
+Your data stays on your machine as plain YAML files you can read and back up. 
+
+There is no account and no cloud, and it works offline.
+
+![Dashboard: overdue actions, follow-ups, the pipeline and the next two weeks](docs/screenshots/overview.png)
 
 Every application in one table, which you can filter, sort, and search:
 
 ![Applications table](docs/screenshots/applications.png)
 
 Everything about one application on one page: company, contacts, the posting, the hiring process,
-interviews, questions and answers, compensation, and notes. Click any field to edit it.
+interviews, questions and answers, compensation, and notes. The key dates and the next step are at
+the top:
 
-![Application page](docs/screenshots/application.png)
+![Application page header: key dates, next step, priority and status](docs/screenshots/application-header.png)
+
+![Job Application and Contacts cards](docs/screenshots/application-cards.png)
+
+Click any field to edit it:
+
+![The Interviews card, and the same card while editing](docs/screenshots/application-edit.png)
 
 A board to drag applications from one status to the next:
 
