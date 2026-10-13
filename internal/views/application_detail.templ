@@ -144,7 +144,7 @@ templ nextStep(d DetailData) {
 		<form method="post" action={ appURL(d) + "/next-step" } hx-post={ appURL(d) + "/next-step" } hx-target="#app-header" hx-swap="outerHTML" class="inline-form">
 			<input type="hidden" name="ctx" value="detail"/>
 			<input type="text" name="nextStep" value={ p.NextStep } placeholder="What happens next?" aria-label="Next step"/>
-			<input type="date" name="nextStepDate" value={ p.NextStepDate.FormValue() } aria-label="Next step date"/>
+			@components.DateField("nextStepDate", p.NextStepDate.FormValue(), false, templ.Attributes{"aria-label": "Next step date"})
 			<button type="submit" class="small">Save</button>
 			<button type="button" class="secondary outline small" data-close-details>Cancel</button>
 		</form>

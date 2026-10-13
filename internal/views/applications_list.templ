@@ -110,9 +110,9 @@ templ ApplicationRow(cfg model.Config, r Row, today model.Date) {
 			@components.Rating(a.Job.Interest)
 		</td>
 		<td>{ a.Process.NextStep }</td>
-		<td class={ "nowrap", templ.KV("overdue", isOverdue(cfg, a, today)) }>{ components.ShortDate(a.Process.NextStepDate, today) }</td>
-		<td class="nowrap">{ components.ShortDate(a.Process.LastContactDate, today) }</td>
-		<td class="nowrap">{ components.ShortDate(a.Process.DateApplied, today) }</td>
+		<td class={ "nowrap", templ.KV("overdue", isOverdue(cfg, a, today)) }>{ a.Process.NextStepDate.Display() }</td>
+		<td class="nowrap">{ a.Process.LastContactDate.Display() }</td>
+		<td class="nowrap">{ a.Process.DateApplied.Display() }</td>
 	</tr>
 }
 
@@ -164,8 +164,8 @@ templ RowsTable(cfg model.Config, rows []Row, today model.Date) {
 						</td>
 						<td><a href={ "/applications/" + r.App.ID }>{ r.App.Job.Title }</a></td>
 						<td>{ r.App.Process.NextStep }</td>
-						<td class={ "nowrap", templ.KV("overdue", isOverdue(cfg, r.App, today)) }>{ components.ShortDate(r.App.Process.NextStepDate, today) }</td>
-						<td class="nowrap">{ components.ShortDate(r.App.Process.DateApplied, today) }</td>
+						<td class={ "nowrap", templ.KV("overdue", isOverdue(cfg, r.App, today)) }>{ r.App.Process.NextStepDate.Display() }</td>
+						<td class="nowrap">{ r.App.Process.DateApplied.Display() }</td>
 					</tr>
 				}
 			</tbody>

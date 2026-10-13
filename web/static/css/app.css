@@ -268,7 +268,7 @@ h3.month { font-size: 1.05rem; margin-top: 1.5rem; border-bottom: 1px solid var(
   list-style: none; display: flex; gap: 1rem; align-items: baseline;
   padding: .3rem .45rem; border-bottom: 1px solid var(--pico-muted-border-color);
 }
-.event .when { flex: 0 0 9rem; color: var(--pico-muted-color); font-size: .85rem; font-variant-numeric: tabular-nums; }
+.event .when { flex: 0 0 10.5rem; color: var(--pico-muted-color); font-size: .85rem; font-variant-numeric: tabular-nums; }
 .event .what { flex: 1; display: flex; flex-direction: column; }
 .event .label { font-size: .85rem; color: var(--pico-muted-color); }
 .event.highlight { border-left: 3px solid var(--c-amber); background: color-mix(in srgb, var(--c-amber) 7%, transparent); }
@@ -352,6 +352,7 @@ details.next-step > summary:focus-visible { outline-offset: 0; color: inherit; }
 }
 .next-step input { padding-block: .3rem; font-size: .85rem; height: auto; }
 .next-step input[type="text"] { width: 16rem; }
+.next-step .date-field > input[type="text"] { width: 9.5rem; }
 
 article.section { margin-bottom: var(--gap); }
 article.section > header { padding-block: .35rem; margin-bottom: .6rem; }
@@ -409,6 +410,21 @@ details.qa summary { font-weight: 600; }
 
 .form-actions { display: flex; gap: .75rem; margin-top: .5rem; }
 .form-actions > * { margin: 0; width: auto; }
+/* Date fields are typed day first (components.DateField). The calendar
+   button opens the browser's picker on the native input hidden underneath,
+   so the picker drops down below the field (app.js). */
+.date-field { position: relative; display: block; }
+.date-field > input[type="text"] { padding-right: 2.25rem; }
+.date-field > .date-pick {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 2.25rem; margin: 0; padding: 0;
+  border: 0; box-shadow: none; background: var(--pico-icon-date) center / 1rem auto no-repeat;
+}
+.date-field > .date-pick:hover { opacity: .75; }
+.date-field > .date-native {
+  position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0;
+  opacity: 0; pointer-events: none;
+}
+.date-field + small { display: block; margin-top: calc(var(--pico-spacing) * -.75); margin-bottom: var(--pico-spacing); }
 .salary-grid { display: grid; grid-template-columns: 1fr 1fr 4.5rem 6.5rem; gap: .5rem; }
 .section .grid:has(> fieldset.salary) { grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); }
 .salary-grid > * { margin-bottom: .5rem; }

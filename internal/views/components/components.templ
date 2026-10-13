@@ -109,7 +109,7 @@ templ RatingInput(label, name string, value int, err string) {
 templ DateInput(label, name string, v model.Date, err string) {
 	<label>
 		{ label }
-		<input type="date" name={ name } value={ v.FormValue() } { Invalid(err)... }/>
+		@DateField(name, v.FormValue(), false, Invalid(err))
 		@ErrorText(err)
 	</label>
 }
@@ -117,9 +117,21 @@ templ DateInput(label, name string, v model.Date, err string) {
 templ DateTimeInput(label, name string, v model.DateTime, err string) {
 	<label>
 		{ label }
-		<input type="datetime-local" name={ name } value={ v.FormValue() } { Invalid(err)... }/>
+		@DateField(name, v.FormValue(), true, Invalid(err))
 		@ErrorText(err)
 	</label>
+}
+
+// DateField is a text input for "dd/mm/yyyy" (or "dd/mm/yyyy hh:mm"), so
+// dates read day first whatever the browser's locale. The button opens the
+// browser's own picker on a hidden native input (app.js).
+templ DateField(name, value string, withTime bool, attrs templ.Attributes) {
+	{{ placeholder, pattern, native := dateKind(withTime) }}
+	<span class="date-field">
+		<input type="text" name={ name } value={ value } placeholder={ placeholder } pattern={ pattern } title={ "Day first: " + placeholder } autocomplete="off" { attrs... }/>
+		<button type="button" class="date-pick" data-date-pick tabindex="-1" title="Pick a date (Alt+↓)" aria-label="Pick a date"></button>
+		<input type={ native } class="date-native" tabindex="-1" aria-hidden="true"/>
+	</span>
 }
 
 // SalaryInput edits a SalaryRange; fields are named <prefix>_min, _max,

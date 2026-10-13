@@ -13,7 +13,7 @@ templ DashboardPage(p Page, d DashboardData) {
 		<div class="page-head">
 			<h1>Dashboard</h1>
 			<p class="muted">
-				{ d.Today.Format("Monday 2 January 2006") } · { strconv.Itoa(d.Active) } active of { strconv.Itoa(d.Total) } applications
+				{ d.Today.Weekday().String() } { d.Today.Display() } · { strconv.Itoa(d.Active) } active of { strconv.Itoa(d.Total) } applications
 			</p>
 		</div>
 		if d.Total == 0 {
@@ -71,7 +71,7 @@ templ eventItem(e model.AppEvent, titles map[string]string, today model.Date, ov
 	<li class={ "event", "kind-" + string(e.Kind), templ.KV("highlight", e.Kind.Highlight()), templ.KV("overdue", overdue) }>
 		<span class="when">
 			if overdue {
-				{ components.ShortDate(e.Date(), today) } · { components.Relative(e.Date(), today) }
+				{ e.Date().Display() } · { components.Relative(e.Date(), today) }
 			} else if e.When.HasTime() {
 				{ e.When.Clock() }
 			} else {
@@ -89,7 +89,7 @@ templ agenda(days []model.DayEvents, titles map[string]string, today model.Date)
 	for _, day := range days {
 		<div class="day">
 			<h3 class={ templ.KV("today", day.Day == today) }>
-				{ components.DayHeading(day.Day, today) }
+				{ components.DayHeading(day.Day) }
 				<span class="muted small">{ components.Relative(day.Day, today) }</span>
 			</h3>
 			<ul class="events">

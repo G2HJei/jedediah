@@ -42,8 +42,13 @@
     toast("Could not reach the app. Is it still running?", true);
   });
 
-  // ---- Clicks: remove a repeatable row, close the next step form, edit a field, open a table row ----
+  // ---- Clicks: open a date picker, remove a repeatable row, close the next step form, edit a field, open a table row ----
   document.addEventListener("click", function (e) {
+    var pick = e.target.closest("[data-date-pick]");
+    if (pick) {
+      openPicker(pick.parentNode);
+      return;
+    }
     var remove = e.target.closest("[data-remove-row]");
     if (remove) {
       var row = remove.closest("[data-row]");
@@ -208,6 +213,38 @@
     if (form && e.target.files.length) form.requestSubmit();
   });
 
+  // ---- Date fields: typed day first whatever the browser's locale ----
+  // The text input holds "dd/mm/yyyy" or "dd/mm/yyyy hh:mm"; the hidden
+  // native input beside it only carries the value to and from the picker.
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  function toNative(text, withTime) {
+    var m = /^\s*(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})(?:\s+(\d{1,2}):(\d{2}))?\s*$/.exec(text);
+    if (!m) return "";
+    var date = m[3] + "-" + pad2(+m[2]) + "-" + pad2(+m[1]);
+    if (!withTime) return date;
+    return date + "T" + (m[4] ? pad2(+m[4]) + ":" + m[5] : "00:00");
+  }
+
+  function fromNative(value) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}:\d{2}))?/.exec(value);
+    return m ? m[3] + "/" + m[2] + "/" + m[1] + (m[4] ? " " + m[4] : "") : "";
+  }
+
+  function openPicker(field) {
+    var text = field.querySelector("input[type=text]");
+    var native = field.querySelector(".date-native");
+    if (!text || !native) return;
+    native.value = toNative(text.value, native.type === "datetime-local");
+    try { native.showPicker(); } catch (_) { text.focus(); }
+  }
+
+  document.addEventListener("change", function (e) {
+    if (!e.target.matches(".date-native")) return;
+    var text = e.target.parentNode.querySelector("input[type=text]");
+    if (text) text.value = fromNative(e.target.value);
+  });
+
   // ---- Confirm before submitting forms marked data-confirm ----
   document.addEventListener("submit", function (e) {
     var msg = e.target.dataset && e.target.dataset.confirm;
@@ -217,9 +254,14 @@
     }
   }, true);
 
-  // ---- Keyboard: Ctrl+Enter / Esc in edit forms, n = new application, / = search ----
+  // ---- Keyboard: Alt+↓ = date picker, Ctrl+Enter / Esc in edit forms, n = new application, / = search ----
   document.addEventListener("keydown", function (e) {
     var t = e.target;
+    if (e.altKey && e.key === "ArrowDown" && t.matches && t.matches(".date-field > input[type=text]")) {
+      e.preventDefault();
+      openPicker(t.parentNode);
+      return;
+    }
     var card = t.closest && t.closest(".section.editing");
     if (card) {
       var form = t.closest("form");

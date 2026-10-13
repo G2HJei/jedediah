@@ -95,6 +95,17 @@ func Invalid(err string) templ.Attributes {
 	return templ.Attributes{"aria-invalid": "true"}
 }
 
+// dateKind describes a DateField with or without a time of day: its
+// placeholder, the pattern the browser checks before submitting (the server
+// checks the date itself) and the type of the native input behind the picker.
+func dateKind(withTime bool) (placeholder, pattern, native string) {
+	const day = `\s*(0?[1-9]|[12]\d|3[01])[\/.](0?[1-9]|1[0-2])[\/.]\d{4}`
+	if withTime {
+		return "dd/mm/yyyy hh:mm", day + `(\s+([01]?\d|2[0-3]):[0-5]\d)?\s*`, "datetime-local"
+	}
+	return "dd/mm/yyyy", day + `\s*`, "date"
+}
+
 // Stars renders a 1–5 rating as filled and empty stars: ★★★ and ☆☆.
 func Stars(n int) (filled, empty string) {
 	n = max(0, min(5, n))
@@ -154,22 +165,7 @@ func Relative(d, today model.Date) string {
 	}
 }
 
-// DayHeading formats a day for agenda lists: "Wed 14 Oct".
-func DayHeading(d, today model.Date) string {
-	if d.Year() != today.Year() {
-		return d.Format("Mon 2 Jan 2006")
-	}
-	return d.Format("Mon 2 Jan")
-}
-
-// ShortDate formats a date for tables: "14 Oct", with the year if it isn't
-// the current one.
-func ShortDate(d, today model.Date) string {
-	if d.IsZero() {
-		return ""
-	}
-	if d.Year() != today.Year() {
-		return d.Format("2 Jan 2006")
-	}
-	return d.Format("2 Jan")
+// DayHeading formats a day for agenda lists: "Wed 14/10/2026".
+func DayHeading(d model.Date) string {
+	return d.Format("Mon") + " " + d.Display()
 }

@@ -2,6 +2,8 @@
 
 _Named for Jedediah Smith (1799–1831), fur trapper and pathfinder of the American West._
 
+[Download the latest release](https://github.com/G2HJei/jedediah/releases/latest/download/jedediah.exe)
+
 Jedediah tracks your job applications. It runs on your own computer and you use it in the browser:
 where you applied, who you talked to, upcoming interviews, and what to do next and when. 
 

@@ -74,31 +74,63 @@ func TestDateYAMLErrorHasLine(t *testing.T) {
 }
 
 func TestDateForm(t *testing.T) {
+	// Forms are day first; ISO dates are still accepted.
 	var d Date
-	if err := d.ParseForm("2026-10-07"); err != nil || d != NewDate(2026, 10, 7) {
-		t.Fatalf("ParseForm: %v %v", d, err)
+	for _, s := range []string{"07/10/2026", "7/10/2026", " 07.10.2026 ", "2026-10-07"} {
+		if err := d.ParseForm(s); err != nil || d != NewDate(2026, 10, 7) {
+			t.Fatalf("ParseForm(%q): %v %v", s, d, err)
+		}
 	}
-	if d.FormValue() != "2026-10-07" {
+	if d.FormValue() != "07/10/2026" {
 		t.Fatalf("FormValue = %q", d.FormValue())
 	}
 	if err := d.ParseForm(""); err != nil || !d.IsZero() {
 		t.Fatalf("empty: %v %v", d, err)
 	}
-	if err := d.ParseForm("07/10/2026"); err == nil {
-		t.Fatal("want error for bad date")
+	for _, s := range []string{"10/31/2026", "31/02/2026", "2026/10/07", "soon"} {
+		if err := d.ParseForm(s); err == nil {
+			t.Fatalf("ParseForm(%q): want error, got %v", s, d)
+		}
 	}
 
 	var dt DateTime
-	if err := dt.ParseForm("2026-10-14T14:00"); err != nil || dt != NewDateTime(2026, 10, 14, 14, 0) {
-		t.Fatalf("ParseForm: %v %v", dt, err)
+	for s, want := range map[string]DateTime{
+		"14/10/2026 14:00": NewDateTime(2026, 10, 14, 14, 0),
+		"14/10/2026  9:05": NewDateTime(2026, 10, 14, 9, 5),
+		"2026-10-14T14:00": NewDateTime(2026, 10, 14, 14, 0),
+	} {
+		if err := dt.ParseForm(s); err != nil || dt != want {
+			t.Fatalf("ParseForm(%q): %v %v", s, dt, err)
+		}
 	}
-	if dt.FormValue() != "2026-10-14T14:00" || dt.Clock() != "14:00" {
-		t.Fatalf("FormValue = %q", dt.FormValue())
+	if v := NewDateTime(2026, 10, 14, 14, 0); v.FormValue() != "14/10/2026 14:00" || v.Clock() != "14:00" {
+		t.Fatalf("FormValue = %q", v.FormValue())
 	}
-	// Date-only values are shown as midnight and read back as date-only.
+	if err := dt.ParseForm("14/10/2026 25:00"); err == nil {
+		t.Fatalf("want error for bad time, got %v", dt)
+	}
+	// Date-only values are shown without a time; midnight reads back as date-only.
 	dateOnly := DateOnly(NewDate(2026, 10, 16))
-	if err := dt.ParseForm(dateOnly.FormValue()); err != nil || dt != dateOnly || dt.HasTime() {
-		t.Fatalf("date-only round trip: %v %v", dt, err)
+	if dateOnly.FormValue() != "16/10/2026" {
+		t.Fatalf("date-only FormValue = %q", dateOnly.FormValue())
+	}
+	for _, s := range []string{dateOnly.FormValue(), "16/10/2026 00:00", "2026-10-16T00:00"} {
+		if err := dt.ParseForm(s); err != nil || dt != dateOnly || dt.HasTime() {
+			t.Fatalf("date-only ParseForm(%q): %v %v", s, dt, err)
+		}
+	}
+}
+
+func TestDateDisplay(t *testing.T) {
+	for got, want := range map[string]string{
+		NewDate(2026, 10, 7).Display():                    "07/10/2026",
+		NewDateTime(2026, 10, 14, 9, 30).Display():        "14/10/2026 09:30",
+		DateOnly(NewDate(2026, 10, 16)).Display():         "16/10/2026",
+		(Date{}).Display() + "|" + (DateTime{}).Display(): "|",
+	} {
+		if got != want {
+			t.Errorf("Display = %q, want %q", got, want)
+		}
 	}
 }
 

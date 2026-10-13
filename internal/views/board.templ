@@ -48,7 +48,7 @@ templ boardCard(b BoardData, r Row) {
 			@components.PriorityPill(&b.Config, a.Priority)
 			if !a.Process.NextStepDate.IsZero() {
 				<span class={ "small", templ.KV("overdue", isOverdue(b.Config, a, b.Today)) } title={ a.Process.NextStep }>
-					{ components.ShortDate(a.Process.NextStepDate, b.Today) }
+					{ a.Process.NextStepDate.Display() }
 				</span>
 			}
 		</div>

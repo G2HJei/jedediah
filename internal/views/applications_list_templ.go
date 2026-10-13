@@ -504,9 +504,9 @@ func ApplicationRow(cfg model.Config, r Row, today model.Date) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(components.ShortDate(a.Process.NextStepDate, today))
+		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(a.Process.NextStepDate.Display())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 113, Col: 125}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 113, Col: 106}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
@@ -517,9 +517,9 @@ func ApplicationRow(cfg model.Config, r Row, today model.Date) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(components.ShortDate(a.Process.LastContactDate, today))
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(a.Process.LastContactDate.Display())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 114, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 114, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
@@ -530,9 +530,9 @@ func ApplicationRow(cfg model.Config, r Row, today model.Date) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(components.ShortDate(a.Process.DateApplied, today))
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(a.Process.DateApplied.Display())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 115, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 115, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 		if templ_7745c5c3_Err != nil {
@@ -786,9 +786,9 @@ func RowsTable(cfg model.Config, rows []Row, today model.Date) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var37 string
-			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(components.ShortDate(r.App.Process.NextStepDate, today))
+			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(r.App.Process.NextStepDate.Display())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 167, Col: 137}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 167, Col: 118}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 			if templ_7745c5c3_Err != nil {
@@ -799,9 +799,9 @@ func RowsTable(cfg model.Config, rows []Row, today model.Date) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var38 string
-			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(components.ShortDate(r.App.Process.DateApplied, today))
+			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(r.App.Process.DateApplied.Display())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 168, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/applications_list.templ`, Line: 168, Col: 62}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 			if templ_7745c5c3_Err != nil {

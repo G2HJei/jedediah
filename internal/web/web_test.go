@@ -183,8 +183,9 @@ func TestCreateEditEverySection(t *testing.T) {
 			"interviewer_linkedin": {""}, "interviewer_notes": {""}},
 			[]string{"Jane", "Tom", "Ann", "Alex", "Hiring manager"},
 			[]string{"recruiters:\n    - name: Tom\n", "    - name: Ann\n", "interviewers:\n    - name: Alex\n"}},
-		{"process", url.Values{"nextStep": {"Tech interview"}, "nextStepDate": {"2026-10-14"},
-			"lastContactDate": {"2026-10-07"}, "dateApplied": {"2026-10-01"}, "screeningDate": {"2026-10-09T10:00"},
+		// Date fields are day first; ISO values are accepted too.
+		{"process", url.Values{"nextStep": {"Tech interview"}, "nextStepDate": {"14/10/2026"},
+			"lastContactDate": {"2026-10-07"}, "dateApplied": {"2026-10-01"}, "screeningDate": {"09/10/2026 10:00"},
 			"followUpDate": {"2026-10-16"}, "offerDate": {""}, "offerResponseDeadline": {""},
 			"takeHomeDetails": {"Build a thing"}, "takeHomeDeadline": {"2026-10-12T17:00"},
 			"decision": {"Pending"}, "rejectionFeedback": {""}},
@@ -204,7 +205,7 @@ func TestCreateEditEverySection(t *testing.T) {
 			"asked_note": {""}, "offered_min": {""}, "offered_max": {""}, "offered_currency": {"GBP"}, "offered_period": {"year"},
 			"offered_note": {""}, "contractType": {"Permanent"}, "bonus": {"10%"}, "equity": {""}, "benefits": {"- Pension"},
 			"noticePeriod": {"1 month"}, "startDate": {"2026-11-02"}},
-			[]string{"£92,000+ / year", "Permanent", "1 month", "2 Nov 2026"},
+			[]string{"£92,000+ / year", "Permanent", "1 month", "02/11/2026"},
 			[]string{"asked: {min: 92000, currency: GBP, period: year}", "startDate: 2026-11-02"}},
 		{"notes", url.Values{"notes": {"Line one\r\nLine two"}},
 			[]string{"Line one<br>"}, []string{"notes: |\n    Line one\n    Line two\n"}},
@@ -258,10 +259,10 @@ func TestValidationErrorsRerenderForm(t *testing.T) {
 	expect(t, r, http.StatusUnprocessableEntity, "Job title is required", "http:// or https://",
 		"Minimum is higher than maximum", `aria-invalid="true"`, `value="4" checked`)
 
-	r = a.post("/applications/"+appID+"/sections/process", url.Values{"nextStepDate": {"14/10/2026"}}, true)
-	expect(t, r, http.StatusUnprocessableEntity, "Use a date like 2026-10-14")
+	r = a.post("/applications/"+appID+"/sections/process", url.Values{"nextStepDate": {"10/31/2026"}}, true)
+	expect(t, r, http.StatusUnprocessableEntity, "Use a date like 14/10/2026")
 	r = a.post("/applications/"+appID+"/sections/interviews", url.Values{"interview_date": {"soon"}}, true)
-	expect(t, r, http.StatusUnprocessableEntity, `id="section-interviews"`, "Use a date and time like 2026-10-14 14:00")
+	expect(t, r, http.StatusUnprocessableEntity, `id="section-interviews"`, "Use a date and time like 14/10/2026 14:00")
 	r = a.post("/applications/"+appID+"/sections/qa", url.Values{"qa_round": {"1"}, "qa_question": {""}, "qa_answer": {"No question"}}, true)
 	expect(t, r, http.StatusUnprocessableEntity, `id="section-qa"`, "Question is required")
 
@@ -420,7 +421,7 @@ func TestQuickActions(t *testing.T) {
 
 	// "Contacted today" changes the process section, so it is refreshed out of band.
 	r = a.post("/applications/"+appID+"/touch", url.Values{"ctx": {"detail"}}, true)
-	expect(t, r, 200, `id="section-process"`, `hx-swap-oob="true"`, "7 Oct 2026")
+	expect(t, r, 200, `id="section-process"`, `hx-swap-oob="true"`, "07/10/2026")
 	y := a.readFile("applications/" + appID + "/application.yaml")
 	for _, want := range []string{"status: rejected", "priority: low", "lastContactDate: 2026-10-07"} {
 		if !strings.Contains(y, want) {
@@ -431,7 +432,7 @@ func TestQuickActions(t *testing.T) {
 	// The header's next step is always there, and saving it refreshes the process card too.
 	expect(t, a.get("/applications/"+appID, false), 200, `<details class="next-step">`, "Not set")
 	r = a.post("/applications/"+appID+"/next-step", url.Values{"nextStep": {"Chase  the recruiter "}, "nextStepDate": {"2026-10-09"}, "ctx": {"detail"}}, true)
-	expect(t, r, 200, `id="app-header"`, `<strong class="next-step-value">Chase the recruiter</strong>`, "9 Oct 2026 (in 2 days)",
+	expect(t, r, 200, `id="app-header"`, `<strong class="next-step-value">Chase the recruiter</strong>`, "09/10/2026 (in 2 days)",
 		`id="section-process"`, `hx-swap-oob="true"`)
 	if !strings.Contains(r.Header.Get("HX-Trigger"), "Next step saved") {
 		t.Errorf("HX-Trigger = %q", r.Header.Get("HX-Trigger"))
@@ -614,7 +615,7 @@ func TestPagesWithDemoData(t *testing.T) {
 	expect(t, a.get("/applications/2026-08-18-larkspur-payments-senior-backend-engineer-payments-core", false), 200,
 		`<dd data-edit-field="noticePeriod">`, `href="/applications/2026-08-18-larkspur-payments-senior-backend-engineer-payments-core/sections/compensation/edit" data-edit-field="startDate">Start date</a>`,
 		`data-edit-section="process" data-edit-field="lastContactDate"`, `class="contact-group" data-edit-field="recruiter_name"`,
-		`<strong class="next-step-value">Submit take-home (reconciliation service)</strong>`, `name="nextStepDate" value="2026-10-09"`)
+		`<strong class="next-step-value">Submit take-home (reconciliation service)</strong>`, `name="nextStepDate" value="09/10/2026"`)
 
 	// Active applications by default; closed ones with the toggle.
 	r := a.get("/applications", false)

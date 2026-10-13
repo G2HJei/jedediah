@@ -1,6 +1,9 @@
 package views
 
-import "github.com/G2HJei/job-search-tracker/internal/views/components"
+import (
+	"github.com/G2HJei/job-search-tracker/internal/model"
+	"github.com/G2HJei/job-search-tracker/internal/views/components"
+)
 
 templ CVPage(p Page, d CVData) {
 	@Layout(p) {
@@ -37,7 +40,7 @@ templ CVPage(p Page, d CVData) {
 							<tr>
 								<td><a href={ "/cv/" + f.Name } target="_blank">{ f.Name }</a></td>
 								<td class="nowrap">{ components.FileSize(f.Size) }</td>
-								<td class="nowrap">{ f.ModTime.Format("2 Jan 2006") }</td>
+								<td class="nowrap">{ model.DateOf(f.ModTime).Display() }</td>
 								<td>
 									if len(f.UsedIn) == 0 {
 										<span class="muted">Not used yet</span>

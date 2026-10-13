@@ -45,7 +45,7 @@ func (f *form) date(name, key string) model.Date {
 func (f *form) parseDate(s, key string) model.Date {
 	var d model.Date
 	if err := d.ParseForm(s); err != nil {
-		f.errs.Add(key, "Use a date like 2026-10-14")
+		f.errs.Add(key, "Use a date like 14/10/2026")
 	}
 	return d
 }
@@ -57,7 +57,7 @@ func (f *form) dateTime(name, key string) model.DateTime {
 func (f *form) parseDateTime(s, key string) model.DateTime {
 	var dt model.DateTime
 	if err := dt.ParseForm(s); err != nil {
-		f.errs.Add(key, "Use a date and time like 2026-10-14 14:00")
+		f.errs.Add(key, "Use a date and time like 14/10/2026 14:00")
 	}
 	return dt
 }

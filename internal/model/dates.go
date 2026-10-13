@@ -11,7 +11,25 @@ import (
 const (
 	dateLayout     = "2006-01-02"
 	dateTimeLayout = "2006-01-02T15:04"
+
+	// Dates are shown and typed day first everywhere, whatever the
+	// browser's locale.
+	displayDateLayout     = "02/01/2006"
+	displayDateTimeLayout = "02/01/2006 15:04"
 )
+
+// parseDayFirst parses a date as typed in a form: "14/10/2026", "4/10/2026"
+// or "14.10.2026", optionally followed by a time ("14:00").
+func parseDayFirst(s string) (DateTime, bool) {
+	s = strings.ReplaceAll(strings.Join(strings.Fields(s), " "), ".", "/")
+	if t, err := time.Parse("2/1/2006", s); err == nil {
+		return DateOnly(DateOf(t)), true
+	}
+	if t, err := time.Parse("2/1/2006 15:04", s); err == nil {
+		return NewDateTime(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute()), true
+	}
+	return DateTime{}, false
+}
 
 // Date is a calendar date without a time zone, stored as "2006-01-02".
 // The zero value means "not set".
@@ -64,14 +82,19 @@ func (d Date) String() string {
 	return d.t.Format(dateLayout)
 }
 
-// FormValue returns the value for an <input type="date">.
-func (d Date) FormValue() string { return d.String() }
+// FormValue returns the value for a date field, as Display: "14/10/2026".
+func (d Date) FormValue() string { return d.Display() }
 
-// ParseForm sets d from an <input type="date"> value.
+// ParseForm sets d from a date field: "14/10/2026" (day first, as FormValue
+// writes it) or "2026-10-14".
 func (d *Date) ParseForm(s string) error {
+	if dt, ok := parseDayFirst(s); ok {
+		*d = dt.Date()
+		return nil
+	}
 	v, err := ParseDate(s)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid date %q (want DD/MM/YYYY)", s)
 	}
 	*d = v
 	return nil
@@ -105,8 +128,8 @@ func (d Date) Time(loc *time.Location) time.Time {
 	return time.Date(d.t.Year(), d.t.Month(), d.t.Day(), 0, 0, 0, 0, loc)
 }
 
-// Display formats the date for humans: "14 Oct 2026".
-func (d Date) Display() string { return d.Format("2 Jan 2006") }
+// Display formats the date for humans: "14/10/2026".
+func (d Date) Display() string { return d.Format(displayDateLayout) }
 
 // MarshalYAML emits an unquoted scalar. Returning a plain string would make
 // the encoder quote it, because "2026-10-14" looks like a timestamp.
@@ -198,21 +221,21 @@ func (dt DateTime) String() string {
 	}
 }
 
-// FormValue returns the value for an <input type="datetime-local">, which
-// needs a time; date-only values are shown as midnight.
-func (dt DateTime) FormValue() string {
-	if dt.IsZero() {
-		return ""
-	}
-	return dt.t.Format(dateTimeLayout)
-}
+// FormValue returns the value for a date and time field, as Display:
+// "14/10/2026 14:00", or "14/10/2026" for date-only values.
+func (dt DateTime) FormValue() string { return dt.Display() }
 
-// ParseForm sets dt from an <input type="datetime-local"> value. Midnight is
-// read back as "date only", which is how FormValue shows date-only values.
+// ParseForm sets dt from a date and time field: "14/10/2026 14:00" or
+// "14/10/2026" (day first, as FormValue writes them), or "2026-10-14T14:00".
+// Midnight is read back as "date only": the browser's date and time picker
+// always gives a time.
 func (dt *DateTime) ParseForm(s string) error {
-	v, err := ParseDateTime(s)
-	if err != nil {
-		return err
+	v, ok := parseDayFirst(s)
+	if !ok {
+		var err error
+		if v, err = ParseDateTime(s); err != nil {
+			return fmt.Errorf("invalid date/time %q (want DD/MM/YYYY HH:MM)", s)
+		}
 	}
 	if v.hasTime && v.t.Hour() == 0 && v.t.Minute() == 0 {
 		v.hasTime = false
@@ -229,15 +252,16 @@ func (dt DateTime) Clock() string {
 	return dt.t.Format("15:04")
 }
 
-// Display formats for humans: "14 Oct 2026 14:00" or "14 Oct 2026".
+// Display formats for humans: "14/10/2026 14:00" or "14/10/2026".
 func (dt DateTime) Display() string {
-	if dt.IsZero() {
+	switch {
+	case dt.IsZero():
 		return ""
+	case dt.hasTime:
+		return dt.t.Format(displayDateTimeLayout)
+	default:
+		return dt.t.Format(displayDateLayout)
 	}
-	if dt.hasTime {
-		return dt.t.Format("2 Jan 2006 15:04")
-	}
-	return dt.t.Format("2 Jan 2006")
 }
 
 // Compare orders by wall clock; a date-only value sorts at the start of its day.
